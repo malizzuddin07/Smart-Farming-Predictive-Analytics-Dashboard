@@ -1,0 +1,197 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Task Workflow</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', sans-serif;
+            background-color: #f6f9f2;
+            margin: 0;
+            padding: 0;
+        }
+
+        /* Navigation Bar */
+        .navbar {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            background-color: #876f25;
+            padding: 15px 30px;
+            color: white;
+            font-size: 18px;
+        }
+
+        .nav-left {
+            font-weight: bold;
+            font-size: 20px;
+        }
+
+        .nav-links a {
+            color: white;
+            text-decoration: none;
+            margin-left: 20px;
+            font-weight: normal;
+        }
+
+        .nav-links a:hover {
+            text-decoration: underline;
+        }
+
+        .container {
+            max-width: 1100px;
+            margin: 30px auto;
+            padding: 20px;
+        }
+
+        h2 {
+            color: #a8c949;
+            margin-bottom: 20px;
+        }
+
+        .card {
+            background: white;
+            border-radius: 12px;
+            padding: 20px;
+            margin-bottom: 20px;
+            box-shadow: 0 0 10px rgba(0,0,0,0.05);
+            border-left: 6px solid #c9dd60;
+        }
+
+        .soon { border-left-color: #ccc; }
+        .in_process { border-left-color: #ffeb3b; }
+        .completed { border-left-color: #4caf50; background: #e6f4ea; }
+        .skipped { border-left-color: #f44336; background: #fbeaea; }
+
+        .card h3 {
+            margin: 0 0 10px;
+            font-size: 20px;
+            color: #444;
+        }
+
+        .card p {
+            margin: 5px 0;
+        }
+
+        input, select, textarea {
+            width: 100%;
+            padding: 10px;
+            margin: 6px 0;
+            border-radius: 6px;
+            border: 1px solid #ccc;
+            font-size: 14px;
+        }
+
+        textarea {
+            resize: vertical;
+        }
+
+        .btn {
+            width: auto;
+            padding: 8px 16px;
+            font-size: 14px;
+            border: none;
+            border-radius: 6px;
+            margin-right: 10px;
+            cursor: pointer;
+        }
+
+        .update-btn {
+            background-color: #a8c949;
+            color: white;
+        }
+
+        .update-btn:hover {
+            background-color: #8aa91f;
+        }
+
+        .edit-btn {
+            background-color: #876f25;
+            color: white;
+        }
+
+        .edit-btn:hover {
+            background-color: #9f892f;
+        }
+
+        .message {
+            background-color: #e6f4ea;
+            color: #2e7d32;
+            padding: 10px;
+            margin-bottom: 20px;
+            border-left: 5px solid #4caf50;
+        }
+    </style>
+</head>
+<body>
+    <!-- Navbar -->
+     <div class="navbar">
+    <div class="nav-left">🌾 Smart Farming</div>
+    <div class="nav-links">
+      <a href="/dashboard">🏠 Dashboard</a>
+      <a href="/workflow">🚜 To-Do List</a>
+      <a href="/logout">🚪 Logout</a>
+    </div>
+  </div>
+
+
+    <div class="container">
+        <h2>🚜 Task Workflow for {{ name }}</h2>
+
+        {% with messages = get_flashed_messages() %}
+        {% if messages %}
+            <div class="message">
+                {{ messages[0] }}
+            </div>
+        {% endif %}
+        {% endwith %}
+
+        {% for task in tasks %}
+        <div class="card {{ task.status }}">
+            <h3>{{ task.task_id }}</h3>
+            <p><strong>Start Date:</strong> {{ task.start_date }}</p>
+            <p><strong>Status:</strong> {{ task.status|capitalize }}</p>
+
+            <form method="POST" action="/update_step" id="form_{{ loop.index }}">
+                <input type="hidden" name="task_id" value="{{ task.task_id }}">
+                <label>Status:</label>
+                <select name="status" {% if task.status != 'in_process' %}disabled{% endif %}>
+                    <option value="in_process" {% if task.status == 'in_process' %}selected{% endif %}>In Process</option>
+                    <option value="completed" {% if task.status == 'completed' %}selected{% endif %}>Completed</option>
+                    <option value="skipped" {% if task.status == 'skipped' %}selected{% endif %}>Skipped</option>
+                </select>
+
+                <label>Detail 1:</label>
+                <input type="text" name="detail1" placeholder="Detail (optional)" {% if task.status != 'in_process' %}disabled{% endif %}>
+                
+                <label>Detail 2:</label>
+                <input type="text" name="detail2" placeholder="Additional (optional)" {% if task.status != 'in_process' %}disabled{% endif %}>
+                
+                <label>Remarks:</label>
+                <textarea name="remarks" rows="3" placeholder="Remarks (optional)" {% if task.status != 'in_process' %}disabled{% endif %}></textarea>
+
+                {% if task.status == 'in_process' %}
+                    <button type="submit" class="btn update-btn">Update</button>
+                {% else %}
+                    <button type="button" class="btn edit-btn" onclick="enableEdit({{ loop.index }})">Edit</button>
+                    <button type="submit" class="btn update-btn" id="update_{{ loop.index }}" style="display:none;">Update</button>
+                {% endif %}
+            </form>
+        </div>
+        {% endfor %}
+    </div>
+
+    <script>
+        function enableEdit(index) {
+            const form = document.getElementById('form_' + index);
+            const inputs = form.querySelectorAll('input, select, textarea');
+            inputs.forEach(input => {
+                if (input.name !== "task_id") input.disabled = false;
+            });
+
+            form.querySelector('#update_' + index).style.display = 'inline-block';
+            const editBtn = form.querySelector('.edit-btn');
+            if (editBtn) editBtn.style.display = 'none';
+        }
+    </script>
+</body>
+</html>
