@@ -5,6 +5,18 @@
 {% block content %}
 <div class="container">
 
+    {% if alert_memo %}
+    <div class="message {{ alert_memo.level }}" style="border-left: 6px solid; padding: 15px; margin-bottom: 25px;">
+        <h3 style="margin-top: 0; border: none; font-size: 1.2em;">
+            {% if alert_memo.level == 'danger' %}🛑 
+            {% elif alert_memo.level == 'warning' %}⚠️ 
+            {% else %}✅ {% endif %}
+            {{ alert_memo.title }}
+        </h3>
+        <p style="margin: 0; font-size: 1.05em;">{{ alert_memo.message }}</p>
+    </div>
+    {% endif %}
+
     <div class="card" style="margin-bottom: 25px;">
         
         <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 15px;">
@@ -77,17 +89,26 @@
 
         <div style="display: flex; flex-direction: column; gap: 25px;">
             
-            {% if forecast_data %}
+            {% if weather_forecast %}
             <div class="card">
                 <h2>🌦️ 3-Day Weather Forecast</h2>
-                <div class="forecast-container">
-                    {% for day in forecast_data %}
-                    <div class="forecast-day">
-                         <p class="date"><strong>{{ (day.date_epoch | int | timestamp_to_date).strftime('%a, %b %d') }}</strong></p>
-                         {% if day.icon %}<img src="https:{{ day.icon }}" alt="{{ day.condition or 'Icon' }}" title="{{ day.condition or '' }}">{% endif %}
-                         <p>{{ day.condition or 'N/A' }}</p>
-                         {% if day.mintemp_c is not none and day.maxtemp_c is not none %}<p class="temp">Min: {{ "%.0f"|format(day.mintemp_c) }}°C</p><p class="temp">Max: {{ "%.0f"|format(day.maxtemp_c) }}°C</p>{% else %}<p class="temp">Temp: N/A</p>{% endif %}
-                         {% if day.totalprecip_mm is not none and day.totalprecip_mm > 0 %}<p>Rain: {{ "%.1f"|format(day.totalprecip_mm) }} mm</p>{% elif day.daily_chance_of_rain is not none %}<p>Rain: {{ day.daily_chance_of_rain }}%</p>{% else %}<p>Rain: 0%</p>{% endif %}
+                <div class="forecast-container" style="display: flex; gap: 10px; justify-content: space-between;">
+                    {% for day in weather_forecast %}
+                    <div class="forecast-day" style="background: #f1f8e9; padding: 15px; border-radius: 8px; flex: 1; text-align: center;">
+                         <p style="font-weight: bold; color: #2e7d32; margin-bottom: 5px;">{{ day.label }}</p>
+                         <p style="font-size: 0.85em; color: #666; margin-bottom: 10px;">{{ day.date }}</p>
+                         
+                         {% if day.icon %}
+                            <img src="https:{{ day.icon }}" alt="Weather Icon" style="width: 50px; height: 50px;">
+                         {% endif %}
+                         
+                         <p style="font-weight: 600; margin: 5px 0;">{{ day.condition }}</p>
+                         
+                         <div style="display: flex; justify-content: center; gap: 10px; font-size: 0.9em;">
+                            <span style="color: #d32f2f;">Max: {{ day.temp_max }}°C</span>
+                            <span style="color: #1976d2;">Min: {{ day.temp_min }}°C</span>
+                         </div>
+                         <p style="font-size: 0.9em; margin-top: 5px;">💧 Rain: {{ day.rain }}mm</p>
                     </div>
                     {% endfor %}
                 </div>

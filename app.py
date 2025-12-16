@@ -167,6 +167,45 @@ def get_365_day_avg_srad(lon, lat):
     vals = data.get('daily_values', [])
     return sum(vals)/len(vals) if vals else 4.5
 
+# --- HELPER: 3-DAY FORECAST ---
+def get_3day_forecast(lon, lat):
+    forecast_data = []
+    key = os.environ.get('WEATHERAPI_KEY')
+    if not key: return []
+    
+    try:
+        # Request 3 days of forecast
+        url = f"http://api.weatherapi.com/v1/forecast.json?key={key}&q={lat},{lon}&days=3&aqi=no&alerts=no"
+        resp = requests.get(url, timeout=10)
+        resp.raise_for_status()
+        
+        # Parse the response
+        days = resp.json().get('forecast', {}).get('forecastday', [])
+        for d in days:
+            # Determine if it's Today, Tomorrow, or day name
+            d_date = datetime.strptime(d['date'], '%Y-%m-%d').date()
+            today = date.today()
+            if d_date == today:
+                day_label = "Today"
+            elif d_date == today + timedelta(days=1):
+                day_label = "Tomorrow"
+            else:
+                day_label = d_date.strftime('%A') # e.g., "Friday"
+
+            forecast_data.append({
+                'label': day_label,
+                'date': d['date'],
+                'condition': d['day']['condition']['text'],
+                'icon': d['day']['condition']['icon'],
+                'temp_max': d['day']['maxtemp_c'],
+                'temp_min': d['day']['mintemp_c'],
+                'rain': d['day']['totalprecip_mm']
+            })
+    except Exception as e:
+        logger.error(f"3-Day Forecast Error: {e}")
+        
+    return forecast_data
+
 def get_single_day_srad(lon, lat, target_date):
     try:
         d_str = target_date.strftime('%Y%m%d')
@@ -176,6 +215,8 @@ def get_single_day_srad(lon, lat, target_date):
         if val > -90: return float(val)
     except Exception: pass
     return get_365_day_avg_srad(lon, lat)
+
+
 
 # --- HELPER: WEATHER API ---
 def get_historical_or_forecast_weather(lon, lat, target_date):
@@ -390,21 +431,58 @@ def session_dashboard(session_id):
     # Get Prediction Data
     cur.execute("SELECT * FROM prediction_history WHERE session_id=%s", (session_id,))
     hist = cur.fetchone() or {}
-    
     cur.close(); conn.close()
     
-    # Format data for template
+    # --- DATA PROCESSING & ALERTS ---
     input_breakdown = {'raw': {}, 'normalized': {}, 'anomalies': [], 'advice': []}
+    alert_memo = None # Default is no alert
+    
     if hist:
-        raw = {k: hist.get(k) for k in features if k in hist} # Map DB cols to features
-        # Note: DB cols might match features exactly or need mapping. Assuming exact match from create_session
+        raw = {k: hist.get(k) for k in features if k in hist}
         input_breakdown['raw'] = raw
         input_breakdown['normalized'] = {k: f"{normalize_value(v, k):.2f}" for k,v in raw.items() if v is not None}
-        input_breakdown['anomalies'] = check_for_anomalies(raw)
-        # Simple advice generation
-        if raw.get('SOIL_pH', 6) < 5.5: input_breakdown['advice'].append("Low pH detected. Consider liming.")
         
-    return render_template("session_dashboard.html", session_details=sess_data, tasks=tasks, input_breakdown=input_breakdown, historical_srad_json="{}", norm_params_json=json.dumps(normalization_params))
+        # Check for suitability anomalies
+        anomalies = check_for_anomalies(raw)
+        input_breakdown['anomalies'] = anomalies
+        
+        # Logic for Alert Memo
+        if anomalies:
+            alert_memo = {
+                "level": "danger", # render as red box
+                "title": "NOT SUITABLE FOR PLANTING",
+                "message": f"Critical issues detected: {'; '.join(anomalies)}. Planting is high risk."
+            }
+        elif raw.get('SOIL_pH', 6) < 5.5:
+             # Soft warning
+             alert_memo = {
+                "level": "warning", # render as yellow box
+                "title": "CONDITIONS SUB-OPTIMAL",
+                "message": "Soil pH is low. Yield may be reduced without treatment."
+             }
+        else:
+             # All good
+             alert_memo = {
+                "level": "success", # render as green box
+                "title": "CONDITIONS SUITABLE",
+                "message": "Environmental factors look good for paddy cultivation."
+             }
+
+    # --- WEATHER & GRAPHS ---
+    # 1. Get 3-Day Forecast
+    weather_3day = get_3day_forecast(sess_data['longitude'], sess_data['latitude'])
+    
+    # 2. Get Historical SRAD (Fixing the missing graph from previous request)
+    srad_data = get_historical_srad(sess_data['longitude'], sess_data['latitude'])
+
+    return render_template("session_dashboard.html", 
+                           session_details=sess_data, 
+                           tasks=tasks, 
+                           input_breakdown=input_breakdown,
+                           alert_memo=alert_memo,
+                           weather_forecast=weather_3day, 
+                           historical_srad_json=json.dumps(srad_data),
+                           norm_params_json=json.dumps(normalization_params))
 
 @app.route('/update_step', methods=['POST'])
 def update_step():
