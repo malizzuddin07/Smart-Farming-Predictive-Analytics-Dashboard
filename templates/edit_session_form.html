@@ -1,0 +1,30 @@
+{% extends "_base.html" %}
+
+{% block title %}Edit Session{% endblock %}
+
+{% block content %}
+<div class="container">
+    <div class="card" style="max-width: 700px; margin: 20px auto;">
+        <h2>Edit Session: {{ session_data.session_name }}</h2>
+        <p>Update the core details for your planting session. Note: Location and planting date cannot be changed as they are tied to the yield prediction.</p>
+
+        <!-- Form posts to the 'update_session' route -->
+        <form method="POST" action="{{ url_for('update_session', session_id=session_data.session_id) }}" class="form-layout">
+            
+            <label for="session_name">Session Name:</label>
+            <input type="text" id="session_name" name="session_name" 
+                   value="{{ session_data.session_name }}" required>
+
+            <label for="field_size">Field Size (in hectares):</label>
+            <input type="number" step="0.01" min="0.01" id="field_size" name="field_size"
+                   value="{{ session_data.field_size }}" required>
+
+            <div class="form-actions">
+                <!-- Cancel button just goes back to the dashboard -->
+                <a href="{{ url_for('session_dashboard', session_id=session_data.session_id) }}" class="btn btn-secondary">Cancel</a>
+                <button type="submit" class="btn">Save Changes</button>
+            </div>
+        </form>
+    </div>
+</div>
+{% endblock %}

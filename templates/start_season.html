@@ -1,0 +1,143 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Start New Season - Smart Farming</title>
+    <style>
+        /* --- UNIFIED STYLESHEET --- */
+        body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif; margin: 0; background-color: #f0f4f0; color: #333; font-size: 16px; line-height: 1.6; }
+        .container { padding: 20px; max-width: 1400px; margin: 20px auto; }
+        /* Use a simpler single-column layout */
+        .form-container { max-width: 700px; margin: 20px auto; }
+        .card { background-color: #fff; padding: 25px; border-radius: 10px; box-shadow: 0 4px 12px rgba(0,0,0,0.08); transition: box-shadow 0.3s ease; margin-bottom: 20px; }
+        .card:hover { box-shadow: 0 6px 16px rgba(0,0,0,0.12); }
+        h2, h3, h4 { color: #2e7d32; margin-top: 0; padding-bottom: 10px; border-bottom: 1px solid #e0e0e0; font-weight: 600; }
+        h3 { font-size: 1.3em; margin-bottom: 15px; }
+        h4 { margin-bottom: 15px; font-size: 1.1em; }
+        hr { border: none; border-top: 1px solid #eee; margin: 25px 0; }
+        
+        /* --- Header / Nav Bar --- */
+        header { background-color: #4CAF50; color: white; padding: 15px 30px; display: flex; justify-content: space-between; align-items: center; box-shadow: 0 2px 5px rgba(0,0,0,0.1); }
+        header h1 { margin: 0; font-size: 1.6em; font-weight: 600; }
+        nav span { margin-right: 20px; font-weight: 500; }
+        nav a { color: white; text-decoration: none; margin-left: 15px; padding: 8px 12px; border-radius: 5px; transition: background-color 0.3s; font-weight: 500; }
+        nav a:hover, nav a.active { background-color: #388e3c; text-decoration: none; }
+        
+        /* --- Forms & Buttons --- */
+        label { display: block; margin-bottom: 6px; font-weight: 500; color: #555; font-size: 0.95em; }
+        input[type="text"], input[type="number"], input[type="date"], select, textarea { 
+            width: 100%; padding: 12px; margin-bottom: 18px; border: 1px solid #ccc; border-radius: 5px; box-sizing: border-box; font-size: 1em; transition: border-color 0.3s; 
+        }
+        input[type="text"]:focus, input[type="number"]:focus, input[type="date"]:focus, select:focus, textarea:focus { 
+            border-color: #4CAF50; outline: none; box-shadow: 0 0 0 2px rgba(76, 175, 80, 0.2); 
+        }
+        textarea { resize: vertical; margin-bottom: 10px; }
+        button[type="submit"], .btn { 
+            background-color: #5cb85c; color: white; padding: 12px 20px; border: none; border-radius: 5px; cursor: pointer; font-size: 1.05em; font-weight: 500; transition: background-color 0.3s; display: inline-block; width: auto; 
+        }
+        button[type="submit"]:hover, .btn:hover { background-color: #4cae4c; }
+        button[type="submit"].full-width { width: 100%; }
+        .btn-secondary { background-color: #6c757d; }
+        .btn-secondary:hover { background-color: #5a6268; }
+
+        /* --- Flashed Messages --- */
+        .message-container { margin-bottom: 20px; }
+        .message { padding: 15px 20px; margin-bottom: 15px; border-radius: 5px; border: 1px solid transparent; font-size: 1em; }
+        .error { background-color: #ffebee; color: #c62828; border-color: #ef9a9a; }
+        .success { background-color: #e8f5e9; color: #2e7d32; border-color: #a5d6a7; }
+        .info { background-color: #e3f2fd; color: #1565c0; border-color: #90caf9; }
+        .warning { background-color: #fffde7; color: #f9a825; border-color: #fff59d; }
+    </style>
+</head>
+<body>
+    <header>
+        <h1>Smart Farming</h1>
+        <nav>
+            <span>Welcome, {{ name }}!</span>
+            <a href="{{ url_for('dashboard') }}">Dashboard</a>
+            <a href="{{ url_for('workflow') }}">Workflow</a>
+            <a href="{{ url_for('logout') }}">Logout</a>
+        </nav>
+    </header>
+
+    <div class="container form-container">
+        
+        <div class="message-container">
+            {% with messages = get_flashed_messages(with_categories=true) %}
+                {% if messages %}
+                    {% for category, message in messages %}
+                        <div class="message {{ category }}">{{ message }}</div>
+                    {% endfor %}
+                {% endif %}
+            {% endwith %}
+        </div>
+        
+        <div class="card shadow-sm">
+            <h2 class="text-center mb-4">Start a New Farming Season</h2>
+            
+            <form action="{{ url_for('create_season') }}" method="POST">
+                
+                <div class="mb-3">
+                    <label for="template_id" class="form-label"><strong>Select Workflow Template:</strong></label>
+                    <select class="form-select" id="template_id" name="template_id" required>
+                        {% if templates %}
+                            {% for template in templates %}
+                                <option value="{{ template.id }}" 
+                                        data-description="{{ template.description or 'No description available.' }}">
+                                    {{ template.name }}
+                                </option>
+                            {% endfor %}
+                        {% else %}
+                            <option value="" disabled>No templates found in database.</option>
+                        {% endif %}
+                    </select>
+                    <div class="form-text" id="template-description" style="font-size: 0.9em; color: #555; margin-top: 8px;">
+                        </div>
+                </div>
+                
+                <div class="mb-3">
+                    <label for="planting_date" class="form-label"><strong>What is your planned Planting Date (HLT 0)?</strong></label>
+                    <input type="date" class="form-control" id="planting_date" name="planting_date" required>
+                    <div class="form-text" style="font-size: 0.9em; color: #555; margin-top: 8px;">
+                        All workflow tasks will be scheduled based on this date.
+                    </div>
+                </div>
+                
+                <hr class="my-4">
+
+                <div class="d-grid gap-2" style="display: flex; gap: 10px;">
+                    <button type="submit" class="btn full-width" {% if not templates %}disabled{% endif %}>
+                        Create My Schedule
+                    </button>
+                    <a href="{{ url_for('dashboard') }}" class="btn btn-secondary">Cancel</a>
+                </div>
+            </form>
+        </div>
+    </div>
+    
+    <script>
+        // Simple script to update the description when the user changes the dropdown
+        document.addEventListener('DOMContentLoaded', function() {
+            const templateSelect = document.getElementById('template_id');
+            const descriptionEl = document.getElementById('template-description');
+            
+            function updateDescription() {
+                try {
+                    const selectedOption = templateSelect.options[templateSelect.selectedIndex];
+                    const description = selectedOption.getAttribute('data-description');
+                    descriptionEl.textContent = description;
+                } catch (e) {
+                    descriptionEl.textContent = 'Please select a template.';
+                }
+            }
+            
+            // Update on load
+            updateDescription();
+            
+            // Update on change
+            templateSelect.addEventListener('change', updateDescription);
+        });
+    </script>
+</body>
+</html>

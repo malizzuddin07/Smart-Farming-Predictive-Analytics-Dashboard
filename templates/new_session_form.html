@@ -1,0 +1,102 @@
+{% extends "_base.html" %}
+
+{% block title %}New Planting Session{% endblock %}
+
+{% block content %}
+<div class="container" style="max-width: 800px;">
+    <div class="card">
+        <h2>Create New Planting Session</h2>
+        <p>Fill in the details below. The system will run a prediction and generate a full workflow schedule for this session.</p>
+        <hr>
+        
+        <form action="{{ url_for('create_session') }}" method="POST" id="create-session-form">
+            
+            <h4>1. Session Details</h4>
+            <label for="session_name">Session Name:</label>
+            <input type="text" id="session_name" name="session_name" placeholder="e.g., 'Field A - May 2025' or 'My North Field'" required>
+            
+            <label for="location">Location (City/Town):</label>
+            <input type="text" id="location" name="location" required placeholder="e.g., Alor Setar">
+            
+            <label for="size">Field Size (in Hectares):</label>
+            <input type="number" step="0.01" min="0.01" id="size" name="size" required placeholder="e.g., 10.5">
+
+            <h4>2. Workflow & Schedule</h4>
+            <label for="planting_date">Planned Planting Date (HLT 0):</label>
+            <input type="date" id="planting_date" name="planting_date" required>
+            
+            <label for="template_id">Workflow Template:</label>
+            <select id="template_id" name="template_id" required>
+                {% if templates %}
+                    {% for template in templates %}
+                        <option value="{{ template.id }}" data-description="{{ template.description or '' }}">
+                            {{ template.name }}
+                        </option>
+                    {% endfor %}
+                {% else %}
+                    <option value="" disabled>No workflow templates found in database.</option>
+                {% endif %}
+            </select>
+            <p id="template-description" style="font-size: 0.9em; color: #555; margin-top: -10px;"></p>
+
+            <hr>
+            <h4>3. Optional: Soil Test Data</h4>
+            <p style="font-size: 0.9em; color: #777; margin: -10px 0 15px 0;">
+                Leave these blank for automatic estimates, or fill them in for a more accurate prediction.
+            </p>
+            <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 15px;">
+                <div>
+                    <label for="SOIL_pH">Soil pH:</label>
+                    <input type="number" step="0.1" name="SOIL_pH" placeholder="e.g., 5.8">
+                </div>
+                <div>
+                    <label for="SOIL_CEC">Soil CEC (meq/100g):</label>
+                    <input type="number" step="0.1" name="SOIL_CEC" placeholder="e.g., 14.5">
+                </div>
+                <div>
+                    <label for="SOIL_OC">Soil Organic Carbon (%):</label>
+                    <input type="number" step="0.01" name="SOIL_OC" placeholder="e.g., 1.75">
+                </div>
+            </div>
+            
+            <hr>
+            <button type="submit" class="btn btn-primary btn-lg full-width" id="submit-btn" {% if not templates %}disabled{% endif %}>
+                Create Session & Run Prediction
+            </button>
+        </form>
+    </div>
+</div>
+
+<script>
+    // Simple script to update the description when the user changes the dropdown
+    document.addEventListener('DOMContentLoaded', function() {
+        const templateSelect = document.getElementById('template_id');
+        const descriptionEl = document.getElementById('template-description');
+        const form = document.getElementById('create-session-form');
+        const submitBtn = document.getElementById('submit-btn');
+        
+        function updateDescription() {
+            try {
+                const selectedOption = templateSelect.options[templateSelect.selectedIndex];
+                const description = selectedOption.getAttribute('data-description');
+                descriptionEl.textContent = description;
+            } catch (e) {
+                if(descriptionEl) descriptionEl.textContent = '';
+            }
+        }
+        updateDescription(); // Run on page load
+        if(templateSelect) templateSelect.addEventListener('change', updateDescription);
+        
+        // HIGH-FIDELITY: Implement Loading State on Submit
+        if (form && submitBtn) {
+            form.addEventListener('submit', function() {
+                // Disable the button and change text
+                submitBtn.disabled = true;
+                submitBtn.textContent = 'Processing... Please Wait (30-60s)';
+                // Optional: Change button color
+                submitBtn.style.backgroundColor = '#f0ad4e'; 
+            });
+        }
+    });
+</script>
+{% endblock %}

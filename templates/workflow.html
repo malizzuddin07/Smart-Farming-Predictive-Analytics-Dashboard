@@ -1,0 +1,160 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Workflow - Smart Farming</title>
+    <style>
+        /* --- UNIFIED STYLESHEET --- */
+        body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif; margin: 0; background-color: #f0f4f0; color: #333; font-size: 16px; line-height: 1.6; }
+        .container { padding: 20px; max-width: 1400px; margin: 20px auto; }
+        /* Use a simpler single-column layout for workflow */
+        .workflow-container { max-width: 900px; margin: 20px auto; }
+        .card { background-color: #fff; padding: 25px; border-radius: 10px; box-shadow: 0 4px 12px rgba(0,0,0,0.08); transition: box-shadow 0.3s ease; margin-bottom: 20px; }
+        .card:hover { box-shadow: 0 6px 16px rgba(0,0,0,0.12); }
+        h2, h3, h4 { color: #2e7d32; margin-top: 0; padding-bottom: 10px; border-bottom: 1px solid #e0e0e0; font-weight: 600; }
+        h3 { font-size: 1.3em; margin-bottom: 15px; }
+        h4 { margin-bottom: 15px; font-size: 1.1em; }
+        hr { border: none; border-top: 1px solid #eee; margin: 25px 0; }
+        
+        /* --- Header / Nav Bar --- */
+        header { background-color: #4CAF50; color: white; padding: 15px 30px; display: flex; justify-content: space-between; align-items: center; box-shadow: 0 2px 5px rgba(0,0,0,0.1); }
+        header h1 { margin: 0; font-size: 1.6em; font-weight: 600; }
+        nav span { margin-right: 20px; font-weight: 500; }
+        nav a { color: white; text-decoration: none; margin-left: 15px; padding: 8px 12px; border-radius: 5px; transition: background-color 0.3s; font-weight: 500; }
+        nav a:hover, nav a.active { background-color: #388e3c; text-decoration: none; }
+        
+        /* --- Forms & Buttons --- */
+        label { display: block; margin-bottom: 6px; font-weight: 500; color: #555; font-size: 0.95em; }
+        input[type="text"], input[type="number"], input[type="date"], select, textarea { 
+            width: 100%; padding: 12px; margin-bottom: 18px; border: 1px solid #ccc; border-radius: 5px; box-sizing: border-box; font-size: 1em; transition: border-color 0.3s; 
+        }
+        input[type="text"]:focus, input[type="number"]:focus, input[type="date"]:focus, select:focus, textarea:focus { 
+            border-color: #4CAF50; outline: none; box-shadow: 0 0 0 2px rgba(76, 175, 80, 0.2); 
+        }
+        textarea { resize: vertical; margin-bottom: 10px; }
+        button[type="submit"], .btn { 
+            background-color: #5cb85c; color: white; padding: 12px 20px; border: none; border-radius: 5px; cursor: pointer; font-size: 1.05em; font-weight: 500; transition: background-color 0.3s; display: inline-block; width: auto; 
+        }
+        button[type="submit"]:hover, .btn:hover { background-color: #4cae4c; }
+        button[type="submit"].full-width { width: 100%; }
+
+        /* --- Workflow Specific --- */
+        .card.soon { border-left: 6px solid #ccc; }
+        .card.in_process { border-left: 6px solid #ffeb3b; }
+        .card.completed { border-left: 6px solid #4caf50; background: #f1f8e9; }
+        .card.skipped { border-left: 6px solid #f44336; background: #fbeaea; }
+        .btn.update-btn { background-color: #5cb85c; }
+        .btn.update-btn:hover { background-color: #4cae4c; }
+        .btn.edit-btn { background-color: #f0ad4e; }
+        .btn.edit-btn:hover { background-color: #ec971f; }
+        .task-meta p { margin: 5px 0; font-size: 1.1em; }
+        .task-meta { margin-bottom: 20px; }
+
+        /* --- Flashed Messages --- */
+        .message-container { margin-bottom: 20px; }
+        .message { padding: 15px 20px; margin-bottom: 15px; border-radius: 5px; border: 1px solid transparent; font-size: 1em; }
+        .error { background-color: #ffebee; color: #c62828; border-color: #ef9a9a; }
+        .success { background-color: #e8f5e9; color: #2e7d32; border-color: #a5d6a7; }
+        .info { background-color: #e3f2fd; color: #1565c0; border-color: #90caf9; }
+        .warning { background-color: #fffde7; color: #f9a825; border-color: #fff59d; }
+    </style>
+</head>
+<body>
+    <header>
+        <h1>Smart Farming</h1>
+        <nav>
+            <span>Welcome, {{ name }}!</span>
+            <a href="{{ url_for('dashboard') }}">Dashboard</a>
+            <a href="{{ url_for('workflow') }}" class="active">Workflow</a>
+            <a href="{{ url_for('logout') }}">Logout</a>
+        </nav>
+    </header>
+
+    <div class="container workflow-container">
+        <h2 style="border-bottom-width: 2px;">My Workflow Schedule</h2>
+
+        <div class="message-container">
+            {% with messages = get_flashed_messages(with_categories=true) %}
+                {% if messages %}
+                    {% for category, message in messages %}
+                        <div class="message {{ category }}">{{ message }}</div>
+                    {% endfor %}
+                {% endif %}
+            {% endwith %}
+        </div>
+
+        {% if not tasks %}
+            <div class="card">
+                <h3>No tasks found.</h3>
+                <p>You don't have a farming schedule yet.</p>
+                <a href="{{ url_for('start_season') }}" class="btn">+ Start a New Season</a>
+            </div>
+        {% endif %}
+
+        {% for task in tasks %}
+        <div class="card {{ task.status }}">
+            <h3>{{ task.task_id }}</h3>
+            <div class="task-meta">
+                <p><strong>Start Date:</strong> {{ task.start_date.strftime('%a, %d %b %Y') if task.start_date else 'N/A' }}</p>
+                <p><strong>Status:</strong> {{ task.status|capitalize }}</p>
+                {% if task.completed_at %}
+                <p><strong>Completed On:</strong> {{ task.completed_at.strftime('%a, %d %b %Y') }}</p>
+                {% endif %}
+            </div>
+
+            <form method="POST" action="/update_step" id="form_{{ loop.index }}">
+                
+                <input type="hidden" name="task_id" value="{{ task.id }}">
+                
+                <label for="status_{{ loop.index }}">Status:</label>
+                <select name="status" id="status_{{ loop.index }}" {% if task.status == 'completed' or task.status == 'skipped' %}disabled{% endif %}>
+                    <option value="soon" {% if task.status == 'soon' %}selected{% endif %}>Soon</option>
+                    <option value="in_process" {% if task.status == 'in_process' %}selected{% endif %}>In Process</option>
+                    <option value="completed" {% if task.status == 'completed' %}selected{% endif %}>Completed</option>
+                    <option value="skipped" {% if task.status == 'skipped' %}selected{% endif %}>Skipped</option>
+                </select>
+
+                <label for="detail1_{{ loop.index }}">Detail 1:</label>
+                <input type.text" name="detail1" id="detail1_{{ loop.index }}" placeholder="Detail (optional)" 
+                       value="{{ task.detail1 or '' }}" {% if task.status == 'completed' or task.status == 'skipped' %}disabled{% endif %}>
+                
+                <label for="detail2_{{ loop.index }}">Detail 2:</label>
+                <input type.text" name="detail2" id="detail2_{{ loop.index }}" placeholder="Additional (optional)" 
+                       value="{{ task.detail2 or '' }}" {% if task.status == 'completed' or task.status == 'skipped' %}disabled{% endif %}>
+                
+                <label for="remarks_{{ loop.index }}">Remarks:</label>
+                <textarea name="remarks" id="remarks_{{ loop.index }}" rows="3" placeholder="Remarks (optional)" 
+                          {% if task.status == 'completed' or task.status == 'skipped' %}disabled{% endif %}>{{ task.remarks or '' }}</textarea>
+
+                {% if task.status == 'completed' or task.status == 'skipped' %}
+                    <button type="button" class="btn edit-btn" onclick="enableEdit({{ loop.index }})">Edit</button>
+                    <button type="submit" class="btn update-btn" id="update_{{ loop.index }}" style="display:none;">Save Changes</button>
+                {% else %}
+                    <button type="submit" class="btn update-btn">Update Status</button>
+                {% endif %}
+            </form>
+        </div>
+        {% endfor %}
+    </div>
+
+    <script>
+        function enableEdit(index) {
+            const form = document.getElementById('form_' + index);
+            // Enable all form elements except the hidden task_id
+            const inputs = form.querySelectorAll('input, select, textarea');
+            inputs.forEach(input => {
+                if (input.name !== "task_id") input.disabled = false;
+            });
+            
+            // Show the 'Update' button
+            const updateBtn = form.querySelector('#update_' + index);
+            if(updateBtn) updateBtn.style.display = 'inline-block';
+            
+            // Hide the 'Edit' button
+            const editBtn = form.querySelector('.edit-btn');
+            if (editBtn) editBtn.style.display = 'none';
+        }
+    </script>
+</body>
+</html>

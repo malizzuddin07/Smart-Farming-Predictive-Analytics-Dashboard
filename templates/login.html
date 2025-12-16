@@ -1,0 +1,24 @@
+{% extends "_base.html" %}
+
+{% block title %}Login - Smart Farming{% endblock %}
+
+{% block content %}
+<div class="container auth-container">
+    <div class="card">
+        <h2 style="text-align: center;">Login</h2>
+        <form action="{{ url_for('login_user') }}" method="POST">
+            <label for="ic">IC Number:</label>
+            <input type="text" id="ic" name="ic" required>
+            
+            <label for="password">Password:</label>
+            <input type="password" id="password" name="password" required>
+            
+            <button type="submit" class="full-width">Login</button>
+        </form>
+        <hr>
+        <p style="text-align: center;">Don't have an account? 
+            <a href="{{ url_for('register_page') }}">Register here</a>
+        </p>
+    </div>
+</div>
+{% endblock %}

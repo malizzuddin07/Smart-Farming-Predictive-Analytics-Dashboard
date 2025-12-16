@@ -1,0 +1,53 @@
+{% extends "_base.html" %}
+
+{% block title %}Settings{% endblock %}
+
+{% block content %}
+<div class="container">
+    <div class="grid-container" style="grid-template-columns: 1fr 1fr; max-width: 1000px; margin: 20px auto; gap: 30px;">
+
+        <!-- Column 1: Update Profile -->
+        <div class="card">
+            <h2>Update Profile</h2>
+            <p>Change your personal information.</p>
+            
+            <form method="POST" action="{{ url_for('update_profile') }}" class="form-layout">
+                <label for="fullname">Full Name:</label>
+                <input type="text" id="fullname" name="fullname" value="{{ user.fullname or '' }}" required>
+                
+                <label for="phone">Phone Number:</label>
+                <input type="tel" id="phone" name="phone" value="{{ user.phone or '' }}">
+                
+                <label for="state">State:</label>
+                <input type="text" id="state" name="state" value="{{ user.state or '' }}">
+                
+                <div class="form-actions">
+                    <button type="submit" class="btn">Save Profile</button>
+                </div>
+            </form>
+        </div>
+
+        <!-- Column 2: Change Password -->
+        <div class="card">
+            <h2>Change Password</h2>
+            <p>Update your account password.</p>
+            
+            <form method="POST" action="{{ url_for('change_password') }}" class="form-layout">
+                <label for="current_password">Current Password:</label>
+                <input type="password" id="current_password" name="current_password" required>
+                
+                <label for="new_password">New Password:</label>
+                <input type="password" id="new_password" name="new_password" required>
+                
+                <label for="confirm_password">Confirm New Password:</label>
+                <input type="password" id="confirm_password" name="confirm_password" required>
+                
+                <div class="form-actions">
+                    <button type="submit" class="btn">Change Password</button>
+                </div>
+            </form>
+        </div>
+
+    </div>
+</div>
+{% endblock %}
