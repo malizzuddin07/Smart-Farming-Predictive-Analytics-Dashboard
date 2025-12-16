@@ -538,6 +538,81 @@ def settings_page():
 def timestamp_to_date_filter(s):
     try: return datetime.fromtimestamp(int(s))
     except: return None
+    
+# --- SETTINGS ROUTES (Add these to app.py) ---
+
+@app.route('/update_profile', methods=['POST'])
+def update_profile():
+    if 'ic' not in session: return redirect(url_for('login_page'))
+    
+    f = request.form
+    conn = get_db_connection()
+    if not conn: 
+        flash("Database connection failed", "error")
+        return redirect(url_for('settings_page'))
+        
+    try:
+        cur = conn.cursor()
+        # Update user details based on the logged-in IC
+        cur.execute("""
+            UPDATE users 
+            SET fullname=%s, phone=%s, state=%s 
+            WHERE ic=%s
+        """, (f['fullname'], f['phone'], f['state'], session['ic']))
+        
+        conn.commit()
+        cur.close()
+        
+        # Update session name just in case it changed
+        session['fullname'] = f['fullname']
+        flash("Profile updated successfully!", "success")
+        
+    except Exception as e:
+        logger.error(f"Update Profile Error: {e}")
+        flash("Failed to update profile.", "error")
+    finally:
+        if conn.is_connected(): conn.close()
+        
+    return redirect(url_for('settings_page'))
+
+@app.route('/change_password', methods=['POST'])
+def change_password():
+    if 'ic' not in session: return redirect(url_for('login_page'))
+    
+    f = request.form
+    new_pass = f['new_password']
+    confirm_pass = f['confirm_password']
+    current_pass_input = f['current_password']
+    
+    if new_pass != confirm_pass:
+        flash("New passwords do not match.", "error")
+        return redirect(url_for('settings_page'))
+        
+    conn = get_db_connection()
+    if not conn: return redirect(url_for('settings_page'))
+    
+    try:
+        cur = conn.cursor(dictionary=True)
+        # Verify old password first
+        cur.execute("SELECT password FROM users WHERE ic=%s", (session['ic'],))
+        user = cur.fetchone()
+        
+        if user and user['password'] == current_pass_input:
+            # Update to new password
+            cur.execute("UPDATE users SET password=%s WHERE ic=%s", (new_pass, session['ic']))
+            conn.commit()
+            flash("Password changed successfully!", "success")
+        else:
+            flash("Current password is incorrect.", "error")
+            
+        cur.close()
+    except Exception as e:
+        logger.error(f"Password Change Error: {e}")
+        flash("Error changing password.", "error")
+    finally:
+        if conn.is_connected(): conn.close()
+        
+    return redirect(url_for('settings_page'))
 
 if __name__ == '__main__':
     # Render runs via Gunicorn, this is for local testing only
