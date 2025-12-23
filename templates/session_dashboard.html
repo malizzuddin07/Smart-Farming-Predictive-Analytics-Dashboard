@@ -8,27 +8,42 @@
     <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 25px; flex-wrap: wrap; gap: 15px;">
         <div>
             <h2 style="margin: 0; border: none; font-size: 2em;">{{ session_details.session_name }}</h2>
-            <p style="color: var(--text-muted); margin: 0;"><i class="fa-solid fa-location-dot"></i> {{ session_details.location }}</p>
+            <p style="color: var(--text-muted); margin: 0;">
+                <i class="fa-solid fa-location-dot"></i> {{ session_details.location }}
+            </p>
         </div>
         <a href="{{ url_for('edit_session_form', session_id=session_details.session_id) }}" class="btn btn-secondary">
             <i class="fa-solid fa-pen"></i> Edit Details
         </a>
     </div>
 
+    {% if alert_memo %}
+    <div class="message {{ alert_memo.level }}">
+        <div style="display: flex; gap: 15px; align-items: flex-start;">
+            <div style="font-size: 1.5em; margin-top: -2px;">
+                {% if alert_memo.level == 'danger' %}🛑 
+                {% elif alert_memo.level == 'warning' %}⚠️ 
+                {% else %}✅ {% endif %}
+            </div>
+            <div>
+                <strong style="display: block; font-size: 1.1em; margin-bottom: 5px;">{{ alert_memo.title }}</strong>
+                <span>{{ alert_memo.message }}</span>
+            </div>
+        </div>
+    </div>
+    {% endif %}
+
     <div class="grid-container" style="grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); margin-bottom: 30px; gap: 20px;">
-        
         <div class="stat-card">
             <i class="fa-solid fa-calendar-day"></i>
             <h4>Planting Date</h4>
             <p>{{ session_details.planting_date.strftime('%d %b') }}</p>
         </div>
-        
         <div class="stat-card">
             <i class="fa-solid fa-hourglass-half"></i>
             <h4>Expected Harvest</h4>
             <p>{{ session_details.expected_harvest_date.strftime('%d %b') }}</p>
         </div>
-
         <div class="stat-card" style="background: linear-gradient(135deg, #ecfdf5 0%, #d1fae5 100%); border-color: #34d399;">
             <i class="fa-solid fa-wheat-awn" style="color: #059669;"></i>
             <h4 style="color: #065f46;">Predicted Yield</h4>
@@ -49,11 +64,9 @@
                     <div class="forecast-day" style="flex: 1; text-align: center; padding: 15px; border-radius: 12px;">
                          <p style="font-weight: 700; color: var(--primary); margin: 0;">{{ day.label }}</p>
                          <div style="font-size: 0.85em; color: var(--text-muted); margin-bottom: 8px;">{{ day.date }}</div>
-                         
                          {% if day.icon %}
                             <img src="https:{{ day.icon }}" alt="icon" style="width: 45px;">
                          {% endif %}
-                         
                          <div style="font-weight: 600; margin-bottom: 5px;">{{ day.condition }}</div>
                          <div style="font-size: 0.9em;">
                             <span style="color: var(--danger); font-weight: bold;">{{ day.temp_max }}°</span> / 
@@ -67,7 +80,7 @@
 
             <div class="card">
                 <h3><i class="fa-solid fa-sun" style="color: #f59e0b;"></i> Solar Radiation History</h3>
-                <div class="chart-container" style="position: relative; height: 300px;">
+                <div class="chart-container" style="position: relative; height: 350px; width: 100%;">
                     <canvas id="sradHistoryChart"></canvas>
                 </div>
             </div>
@@ -78,14 +91,19 @@
                 <h3 style="margin: 0; border: none;">Workflow</h3>
                 <form method="GET" action="{{ url_for('session_dashboard', session_id=session_details.session_id) }}" style="margin: 0;">
                     <select name="sort_by" onchange="this.form.submit()" style="margin: 0; padding: 5px 10px; font-size: 0.85em; width: auto;">
-                        <option value="default">Priority</option>
-                        <option value="in_process">In Process</option>
-                        <option value="soon">Soon</option>
+                        <option value="default" {% if current_sort == 'default' %}selected{% endif %}>Priority</option>
+                        <option value="in_process" {% if current_sort == 'in_process' %}selected{% endif %}>In Process</option>
+                        <option value="soon" {% if current_sort == 'soon' %}selected{% endif %}>Soon</option>
+                        <option value="completed" {% if current_sort == 'completed' %}selected{% endif %}>Completed</option>
                     </select>
                 </form>
             </div>
             
             <div style="max-height: 800px; overflow-y: auto; padding-right: 5px;">
+                {% if not tasks %}
+                    <p style="color: var(--text-muted); text-align: center;">No tasks found.</p>
+                {% endif %}
+
                 {% for task in tasks %}
                 <div style="border: 1px solid #eee; border-left: 4px solid {{ '#10b981' if task.status == 'completed' else ('#f59e0b' if task.status == 'in_process' else '#d1d5db') }}; border-radius: 8px; padding: 15px; margin-bottom: 15px; background: #fff;">
                     
@@ -98,7 +116,7 @@
                         <input type="hidden" name="task_id" value="{{ task.id }}">
                         <input type="hidden" name="session_id" value="{{ session_details.session_id }}">
                         
-                        <select name="status" style="margin-bottom: 10px; padding: 8px; font-size: 0.9em;" {% if task.status == 'completed' %}disabled{% endif %}>
+                        <select name="status" style="margin-bottom: 10px; padding: 8px; font-size: 0.9em; width: 100%; border: 1px solid #ddd; border-radius: 6px;" {% if task.status == 'completed' %}disabled{% endif %}>
                             <option value="soon" {% if task.status == 'soon' %}selected{% endif %}>Waiting</option>
                             <option value="in_process" {% if task.status == 'in_process' %}selected{% endif %}>In Process</option>
                             <option value="completed" {% if task.status == 'completed' %}selected{% endif %}>Done</option>
@@ -114,5 +132,62 @@
         </div>
     </div>
 </div>
+
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        const sradCtx = document.getElementById('sradHistoryChart');
+        
+        let historicalSradData = {};
+        try {
+            // Retrieve data passed from Python app.py
+            historicalSradData = {{ historical_srad_json | safe }};
+        } catch(e) {
+            console.error("Error parsing SRAD data:", e);
+        }
+        
+        if (sradCtx && historicalSradData && historicalSradData.dates && historicalSradData.dates.length > 0) {
+            new Chart(sradCtx.getContext('2d'), {
+                type: 'line',
+                data: {
+                    labels: historicalSradData.dates,
+                    datasets: [{
+                        label: 'Avg Solar Radiation (kWh/m²/day)',
+                        data: historicalSradData.values,
+                        borderColor: '#f59e0b', // Matches the sun icon color
+                        backgroundColor: 'rgba(245, 158, 11, 0.1)',
+                        borderWidth: 2,
+                        tension: 0.3, // Makes line slightly curved
+                        fill: true,
+                        pointRadius: 3
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    scales: { 
+                        y: { 
+                            beginAtZero: true,
+                            grid: { color: '#f3f4f6' }
+                        },
+                        x: {
+                            grid: { display: false }
+                        }
+                    },
+                    plugins: {
+                        legend: { display: true, position: 'top' }
+                    }
+                }
+            });
+        } else if (sradCtx) {
+             const noDataMsg = document.createElement('p');
+             noDataMsg.textContent = 'No historical solar data available.';
+             noDataMsg.style.textAlign = 'center'; 
+             noDataMsg.style.padding = '40px';
+             noDataMsg.style.color = '#9ca3af';
+             sradCtx.parentNode.appendChild(noDataMsg);
+             sradCtx.style.display = 'none';
+        }
+    });
+</script>
 
 {% endblock %}
