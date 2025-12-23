@@ -1,114 +1,64 @@
 {% extends "_base.html" %}
 
-{% block title %}{{ session_details.session_name or 'Session Dashboard' }}{% endblock %}
+{% block title %}{{ session_details.session_name }}{% endblock %}
 
 {% block content %}
 <div class="container">
 
-    {% if alert_memo %}
-    <div class="message {{ alert_memo.level }}" style="border-left: 6px solid; padding: 15px; margin-bottom: 25px;">
-        <h3 style="margin-top: 0; border: none; font-size: 1.2em;">
-            {% if alert_memo.level == 'danger' %}🛑 
-            {% elif alert_memo.level == 'warning' %}⚠️ 
-            {% else %}✅ {% endif %}
-            {{ alert_memo.title }}
-        </h3>
-        <p style="margin: 0; font-size: 1.05em;">{{ alert_memo.message }}</p>
+    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 25px; flex-wrap: wrap; gap: 15px;">
+        <div>
+            <h2 style="margin: 0; border: none; font-size: 2em;">{{ session_details.session_name }}</h2>
+            <p style="color: var(--text-muted); margin: 0;"><i class="fa-solid fa-location-dot"></i> {{ session_details.location }}</p>
+        </div>
+        <a href="{{ url_for('edit_session_form', session_id=session_details.session_id) }}" class="btn btn-secondary">
+            <i class="fa-solid fa-pen"></i> Edit Details
+        </a>
     </div>
-    {% endif %}
 
-    <div class="card" style="margin-bottom: 25px;">
+    <div class="grid-container" style="grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); margin-bottom: 30px; gap: 20px;">
         
-        <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 15px;">
-            <h2>{{ session_details.session_name }}</h2>
-            <a href="{{ url_for('edit_session_form', session_id=session_details.session_id) }}" class="btn">Edit Session</a>
+        <div class="stat-card">
+            <i class="fa-solid fa-calendar-day"></i>
+            <h4>Planting Date</h4>
+            <p>{{ session_details.planting_date.strftime('%d %b') }}</p>
+        </div>
+        
+        <div class="stat-card">
+            <i class="fa-solid fa-hourglass-half"></i>
+            <h4>Expected Harvest</h4>
+            <p>{{ session_details.expected_harvest_date.strftime('%d %b') }}</p>
         </div>
 
-        <div class="grid-container" style="grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 15px; margin-top: 20px;">
-            <div class="stat-card">
-                <h4>📍 Location</h4>
-                <p>{{ session_details.location }}</p>
-            </div>
-            
-            <div class="stat-card" title="Predicted Yield is an estimate with a +/- 10% variance.">
-                <h4>🌾 Predicted Total Yield (t)</h4>
-                {% set advice_yield_range = input_breakdown.advice[0] if input_breakdown.advice else None %}
-                {% if advice_yield_range %}
-                    <p style="font-size: 1.1em; color: #5cb85c;">{{ "%.2f"|format(session_details.predicted_total_yield) }}</p>
-                    <p style="font-size: 0.8em; font-weight: 500; color: #777;">
-                        {{ advice_yield_range.split(': ')[-1].split(' to ')[0] }} to {{ advice_yield_range.split(': ')[-1].split(' to ')[-1].split(' t/ha')[0]|float * session_details.field_size | round(2) }} t (Range)
-                    </p>
-                {% else %}
-                    <p>{{ "%.2f"|format(session_details.predicted_total_yield) }} t</p>
-                {% endif %}
-            </div>
-            
-            <div class="stat-card">
-                <h4>📈 Yield per Hectare (t/ha)</h4>
-                 <p>{{ "%.4f"|format(session_details.predicted_yield_per_ha) }}</p>
-            </div>
-            <div class="stat-card">
-                <h4>🗓️ Planting Date</h4>
-                <p>{{ session_details.planting_date.strftime('%d %b %Y') }}</p>
-            </div>
-            <div class="stat-card">
-                <h4>✅ Expected Harvest</h4>
-                <p>{{ session_details.expected_harvest_date.strftime('%d %b %Y') }}</p>
-            </div>
+        <div class="stat-card" style="background: linear-gradient(135deg, #ecfdf5 0%, #d1fae5 100%); border-color: #34d399;">
+            <i class="fa-solid fa-wheat-awn" style="color: #059669;"></i>
+            <h4 style="color: #065f46;">Predicted Yield</h4>
+            <p style="color: #047857;">{{ "%.2f"|format(session_details.predicted_total_yield) }} t</p>
+            <small style="color: #064e3b; font-size: 0.8em; font-weight: 500;">( {{ "%.2f"|format(session_details.predicted_yield_per_ha) }} t/ha )</small>
         </div>
     </div>
     
-    {% if input_breakdown and (input_breakdown.anomalies or input_breakdown.advice) %}
-        <div style="margin-bottom: 25px;">
-            {% if input_breakdown.anomalies %}
-                <div class="message warning">
-                    <strong>⚠️ Data Warnings Detected:</strong>
-                    <ul style="margin: 5px 0 0 20px; padding: 0;">
-                        {% for anomaly in input_breakdown.anomalies %}
-                            <li>{{ anomaly }}</li>
-                        {% endfor %}
-                    </ul>
-                </div>
-            {% endif %}
-            
-            {% if input_breakdown.advice %}
-                <div class="message info">
-                    <strong>💡 Actionable Advice:</strong>
-                    <ul style="margin: 5px 0 0 20px; padding: 0;">
-                        {% for advice_line in input_breakdown.advice %}
-                            <li>{{ advice_line | safe }}</li>
-                        {% endfor %}
-                    </ul>
-                </div>
-            {% endif %}
-        </div>
-    {% endif %}
+    <div class="grid-container" style="grid-template-columns: 2fr 1fr;">
 
-
-    <div class="grid-container">
-
-        <div style="display: flex; flex-direction: column; gap: 25px;">
+        <div style="display: flex; flex-direction: column; gap: 30px;">
             
             {% if weather_forecast %}
             <div class="card">
-                <h2>🌦️ 3-Day Weather Forecast</h2>
-                <div class="forecast-container" style="display: flex; gap: 10px; justify-content: space-between;">
+                <h3><i class="fa-solid fa-cloud-sun-rain" style="color: var(--accent);"></i> 3-Day Forecast</h3>
+                <div style="display: flex; gap: 15px; justify-content: space-between; margin-top: 15px;">
                     {% for day in weather_forecast %}
-                    <div class="forecast-day" style="background: #f1f8e9; padding: 15px; border-radius: 8px; flex: 1; text-align: center;">
-                         <p style="font-weight: bold; color: #2e7d32; margin-bottom: 5px;">{{ day.label }}</p>
-                         <p style="font-size: 0.85em; color: #666; margin-bottom: 10px;">{{ day.date }}</p>
+                    <div class="forecast-day" style="flex: 1; text-align: center; padding: 15px; border-radius: 12px;">
+                         <p style="font-weight: 700; color: var(--primary); margin: 0;">{{ day.label }}</p>
+                         <div style="font-size: 0.85em; color: var(--text-muted); margin-bottom: 8px;">{{ day.date }}</div>
                          
                          {% if day.icon %}
-                            <img src="https:{{ day.icon }}" alt="Weather Icon" style="width: 50px; height: 50px;">
+                            <img src="https:{{ day.icon }}" alt="icon" style="width: 45px;">
                          {% endif %}
                          
-                         <p style="font-weight: 600; margin: 5px 0;">{{ day.condition }}</p>
-                         
-                         <div style="display: flex; justify-content: center; gap: 10px; font-size: 0.9em;">
-                            <span style="color: #d32f2f;">Max: {{ day.temp_max }}°C</span>
-                            <span style="color: #1976d2;">Min: {{ day.temp_min }}°C</span>
+                         <div style="font-weight: 600; margin-bottom: 5px;">{{ day.condition }}</div>
+                         <div style="font-size: 0.9em;">
+                            <span style="color: var(--danger); font-weight: bold;">{{ day.temp_max }}°</span> / 
+                            <span style="color: #3b82f6;">{{ day.temp_min }}°</span>
                          </div>
-                         <p style="font-size: 0.9em; margin-top: 5px;">💧 Rain: {{ day.rain }}mm</p>
                     </div>
                     {% endfor %}
                 </div>
@@ -116,198 +66,53 @@
             {% endif %}
 
             <div class="card">
-                <h2>☀️ Historical Solar Radiation (Monthly Avg)</h2>
-                <div class="chart-container">
+                <h3><i class="fa-solid fa-sun" style="color: #f59e0b;"></i> Solar Radiation History</h3>
+                <div class="chart-container" style="position: relative; height: 300px;">
                     <canvas id="sradHistoryChart"></canvas>
                 </div>
             </div>
-
-            {% if input_breakdown and input_breakdown.raw and input_breakdown.normalized %}
-            <div class="card">
-                <h4>Prediction Inputs Used</h4>
-                <div class="input-breakdown">
-                    <table>
-                        <thead>
-                            <tr><th>Feature</th><th>Raw Value</th><th>Normalized</th><th>Optimal Range</th></tr>
-                        </thead>
-                        <tbody>
-                            {% for key, raw_value in input_breakdown.raw.items() %}
-                                <tr>
-                                    <td>{{ key.replace('_BOHOR', '').replace(' (meq/100)', '') | replace('TMIN_All', 'Min Temp (°C)') | replace('TMAX_All', 'Max Temp (°C)') | replace('RAIN1', 'Rain (mm/hr)') | replace('TotalSRAD', 'Avg. Solar Rad') | replace('SOIL_OC', 'Soil OC (%)') }}</td>
-                                    <td>
-                                        {% if raw_value is not none %}
-                                            {% if 'Temp' in key or 'SRAD' in key or 'pH' in key %}
-                                                {{ "%.2f"|format(raw_value) }}
-                                            {% else %}
-                                                {{ "%.4f"|format(raw_value) }}
-                                            {% endif %}
-                                        {% else %}
-                                            N/A
-                                        {% endif %}
-                                    </td>
-                                    <td>{{ input_breakdown.normalized[key] or 'N/A' }}</td>
-                                    <td id="optimal-{{ key | replace(' (meq/100)', '') }}"></td> </tr>
-                            {% endfor %}
-                        </tbody>
-                    </table>
-                </div>
-            </div>
-            {% endif %}
         </div>
 
-        <div class="card" style="grid-column: span 1 / auto; grid-row: span 2 / auto;">
-            <h2>📋 Workflow Schedule</h2>
+        <div class="card" style="height: fit-content;">
+            <div style="display: flex; justify-content: space-between; align-items: center; border-bottom: 2px solid #eee; padding-bottom: 15px; margin-bottom: 15px;">
+                <h3 style="margin: 0; border: none;">Workflow</h3>
+                <form method="GET" action="{{ url_for('session_dashboard', session_id=session_details.session_id) }}" style="margin: 0;">
+                    <select name="sort_by" onchange="this.form.submit()" style="margin: 0; padding: 5px 10px; font-size: 0.85em; width: auto;">
+                        <option value="default">Priority</option>
+                        <option value="in_process">In Process</option>
+                        <option value="soon">Soon</option>
+                    </select>
+                </form>
+            </div>
             
-            <form method="GET" action="{{ url_for('session_dashboard', session_id=session_details.session_id) }}" style="margin-bottom: 15px;">
-                <label for="sort_by" style="font-weight: bold; margin-right: 10px;">Filter by:</label>
-                <select name="sort_by" id="sort_by" onchange="this.form.submit()">
-                    <option value="default" {% if current_sort == 'default' %}selected{% endif %}>Default (Priority)</option>
-                    <option value="in_process" {% if current_sort == 'in_process' %}selected{% endif %}>In Process</option>
-                    <option value="soon" {% if current_sort == 'soon' %}selected{% endif %}>Soon</option>
-                    <option value="completed" {% if current_sort == 'completed' %}selected{% endif %}>Completed</option>
-                    <option value="skipped" {% if current_sort == 'skipped' %}selected{% endif %}>Skipped</option>
-                </select>
-            </form>
-            
-            <div style="max-height: 1000px; overflow-y: auto; padding-right: 10px;">
-                {% if not tasks %}
-                    <p>No workflow tasks found for this session.</p>
-                {% endif %}
-                
+            <div style="max-height: 800px; overflow-y: auto; padding-right: 5px;">
                 {% for task in tasks %}
-                <div class="card {{ task.status }}" style="box-shadow: none; border: 1px solid #eee;">
-                    <h3>{{ task.task_id }}</h3>
-                    <div class="task-meta">
-                        <p><strong>Start Date:</strong> {{ task.start_date.strftime('%a, %d %b %Y') if task.start_date else 'N/A' }}</p>
-                        <p><strong>Status:</strong> {{ task.status|capitalize }}</p>
-                        {% if task.completed_at %}<p><strong>Completed On:</strong> {{ task.completed_at.strftime('%d %b %Y') }}</p>{% endif %}
+                <div style="border: 1px solid #eee; border-left: 4px solid {{ '#10b981' if task.status == 'completed' else ('#f59e0b' if task.status == 'in_process' else '#d1d5db') }}; border-radius: 8px; padding: 15px; margin-bottom: 15px; background: #fff;">
+                    
+                    <div style="display: flex; justify-content: space-between; margin-bottom: 10px;">
+                        <strong style="color: var(--primary-dark);">{{ task.task_id }}</strong>
+                        <span style="font-size: 0.8em; background: #f3f4f6; padding: 2px 8px; border-radius: 4px;">{{ task.start_date.strftime('%d %b') }}</span>
                     </div>
 
                     <form method="POST" action="{{ url_for('update_step', sort_by=current_sort) }}" id="form_{{ task.id }}">
                         <input type="hidden" name="task_id" value="{{ task.id }}">
                         <input type="hidden" name="session_id" value="{{ session_details.session_id }}">
                         
-                        {% set is_disabled = (task.status == 'completed' or task.status == 'skipped') %}
-                        
-                        <label for="status_{{ task.id }}">Status:</label>
-                        <select name="status" id="status_{{ task.id }}" {% if is_disabled %}disabled{% endif %}>
-                            <option value="soon" {% if task.status == 'soon' %}selected{% endif %}>Soon</option>
+                        <select name="status" style="margin-bottom: 10px; padding: 8px; font-size: 0.9em;" {% if task.status == 'completed' %}disabled{% endif %}>
+                            <option value="soon" {% if task.status == 'soon' %}selected{% endif %}>Waiting</option>
                             <option value="in_process" {% if task.status == 'in_process' %}selected{% endif %}>In Process</option>
-                            <option value="completed" {% if task.status == 'completed' %}selected{% endif %}>Completed</option>
-                            <option value="skipped" {% if task.status == 'skipped' %}selected{% endif %}>Skipped</option>
+                            <option value="completed" {% if task.status == 'completed' %}selected{% endif %}>Done</option>
                         </select>
-
-                        <label for="detail1_{{ task.id }}">Detail 1:</label>
-                        <input type="text" name="detail1" id="detail1_{{ task.id }}" placeholder="Detail (optional)" 
-                               value="{{ task.detail1 or '' }}" {% if is_disabled %}disabled{% endif %}>
                         
-                        <label for="detail2_{{ task.id }}">Detail 2:</label>
-                        <input type="text" name="detail2" id="detail2_{{ task.id }}" placeholder="Additional (optional)" 
-                               value="{{ task.detail2 or '' }}" {% if is_disabled %}disabled{% endif %}>
-                        
-                        <label for="remarks_{{ task.id }}">Remarks:</label>
-                        <textarea name="remarks" id="remarks_{{ task.id }}" rows="3" placeholder="Remarks (optional)" 
-                                  {% if is_disabled %}disabled{% endif %}>{{ task.remarks or '' }}</textarea>
-
-                        {% if is_disabled %}
-                            <button type="button" class="btn edit-btn" onclick="enableEdit({{ task.id }})">Edit</button>
-                            <button type="submit" class="btn update-btn" id="update_{{ task.id }}" style="display:none;">Save Changes</button>
-                        {% else %}
-                            <button type="submit" class="btn update-btn">Update Status</button>
+                        {% if task.status != 'completed' %}
+                        <button type="submit" class="btn full-width" style="font-size: 0.85em; padding: 8px;">Update</button>
                         {% endif %}
                     </form>
                 </div>
                 {% endfor %}
             </div>
         </div>
-
     </div>
-</div> 
-
-<script>
-    function enableEdit(taskId) {
-        const form = document.getElementById('form_' + taskId);
-        const inputs = form.querySelectorAll('input, select, textarea');
-        inputs.forEach(input => {
-            if (input.name !== "task_id" && input.name !== "session_id") input.disabled = false;
-        });
-        
-        const updateBtn = form.querySelector('#update_' + taskId);
-        if(updateBtn) updateBtn.style.display = 'inline-block';
-        
-        const editBtn = form.querySelector('.edit-btn');
-        if (editBtn) editBtn.style.display = 'none';
-    }
-
-    // Charting and High-Fidelity Data Display
-    document.addEventListener('DOMContentLoaded', function() {
-        
-        // --- SRAD History Chart ---
-        const sradCtx = document.getElementById('sradHistoryChart');
-        let historicalSradData;
-        try {
-            historicalSradData = {{ historical_srad_json | safe }};
-        } catch(e) {
-            historicalSradData = {};
-            console.error("Error setting SRAD data:", e);
-        }
-        
-        if (sradCtx && historicalSradData && historicalSradData.dates && historicalSradData.dates.length > 0) {
-            new Chart(sradCtx.getContext('2d'), {
-                type: 'line',
-                data: {
-                    labels: historicalSradData.dates,
-                    datasets: [{
-                        label: 'Monthly Avg Solar Radiation (kWh/m²/day)',
-                        data: historicalSradData.values,
-                        borderColor: 'rgb(255, 159, 64)',
-                        tension: 0.1,
-                        fill: false
-                    }]
-                },
-                options: {
-                    responsive: true,
-                    maintainAspectRatio: false,
-                    scales: { y: { beginAtZero: true } }
-                }
-            });
-        } else if (sradCtx) {
-             const noDataSrad = document.createElement('p');
-             noDataSrad.textContent = 'Historical Solar Radiation data not available for this session.';
-             noDataSrad.style.textAlign = 'center'; noDataSrad.style.padding = '20px';
-             sradCtx.parentNode.appendChild(noDataSrad);
-             sradCtx.style.display = 'none';
-        }
-        
-        // --- HIGH-FIDELITY: Populate Optimal Range Column ---
-        let normParams;
-        try {
-            // Note: This data is JSON dumped in app.py
-            normParams = {{ norm_params_json | safe }};
-        } catch(e) {
-            normParams = {};
-            console.error("Error parsing normalization parameters:", e);
-        }
-        
-        for (const [key, params] of Object.entries(normParams)) {
-            let cleanKey = key.replace(' (meq/100)', '');
-            const elementId = `optimal-${cleanKey}`;
-            const element = document.getElementById(elementId);
-            
-            if (element && params.optimal) {
-                // Formatting based on key type
-                const minVal = parseFloat(params.optimal[0]).toFixed(1).replace('.0', '');
-                const maxVal = parseFloat(params.optimal[1]).toFixed(1).replace('.0', '');
-                
-                element.textContent = `${minVal} - ${maxVal}`;
-                
-                if(key.includes('NDVI')) element.textContent += ' NDVI';
-                else if(key.includes('pH')) element.textContent += ' pH';
-                else if(key.includes('SRAD')) element.textContent += ' kWh/m²/day';
-                else if(key.includes('OC')) element.textContent += ' %';
-            }
-        }
-    });
-</script>
+</div>
 
 {% endblock %}

@@ -4,21 +4,32 @@
 
 {% block content %}
 <div class="container auth-container">
-    <div class="card">
-        <h2 style="text-align: center;">Login</h2>
-        <form action="{{ url_for('login_user') }}" method="POST">
-            <label for="ic">IC Number:</label>
-            <input type="text" id="ic" name="ic" required>
+    <div class="card" style="text-align: center; padding: 40px;">
+        <div style="background: #ecfdf5; width: 80px; height: 80px; border-radius: 50%; display: flex; align-items: center; justify-content: center; margin: 0 auto 20px auto;">
+            <i class="fa-solid fa-user-lock" style="font-size: 2em; color: var(--primary);"></i>
+        </div>
+        <h2 style="border: none; margin-bottom: 10px;">Welcome Back</h2>
+        <p style="color: var(--text-muted); margin-bottom: 30px;">Login to manage your farm.</p>
+        
+        <form action="{{ url_for('login_user') }}" method="POST" class="form-layout" style="text-align: left;">
+            <label for="ic">IC Number</label>
+            <div style="position: relative;">
+                <i class="fa-solid fa-id-card" style="position: absolute; left: 15px; top: 15px; color: #9ca3af;"></i>
+                <input type="text" id="ic" name="ic" placeholder="Enter your IC" required style="padding-left: 45px;">
+            </div>
             
-            <label for="password">Password:</label>
-            <input type="password" id="password" name="password" required>
+            <label for="password">Password</label>
+            <div style="position: relative;">
+                <i class="fa-solid fa-key" style="position: absolute; left: 15px; top: 15px; color: #9ca3af;"></i>
+                <input type="password" id="password" name="password" placeholder="Enter your password" required style="padding-left: 45px;">
+            </div>
             
-            <button type="submit" class="full-width">Login</button>
+            <button type="submit" class="full-width" style="margin-top: 10px;">Login</button>
         </form>
-        <hr>
-        <p style="text-align: center;">Don't have an account? 
-            <a href="{{ url_for('register_page') }}">Register here</a>
-        </p>
+        
+        <div style="margin-top: 25px; border-top: 1px solid #eee; padding-top: 20px; font-size: 0.9em;">
+            <p style="color: var(--text-muted);">Don't have an account? <a href="{{ url_for('register_page') }}" style="color: var(--primary); font-weight: 600; text-decoration: none;">Register here</a></p>
+        </div>
     </div>
 </div>
 {% endblock %}

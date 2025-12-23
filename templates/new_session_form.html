@@ -1,102 +1,48 @@
 {% extends "_base.html" %}
 
-{% block title %}New Planting Session{% endblock %}
+{% block title %}New Session{% endblock %}
 
 {% block content %}
 <div class="container" style="max-width: 800px;">
     <div class="card">
-        <h2>Create New Planting Session</h2>
-        <p>Fill in the details below. The system will run a prediction and generate a full workflow schedule for this session.</p>
-        <hr>
+        <h2 style="text-align: center; border: none; margin-bottom: 10px;"><i class="fa-solid fa-seedling" style="color: var(--primary);"></i> Start New Session</h2>
+        <p style="text-align: center; color: var(--text-muted); margin-bottom: 30px;">Enter your field details to generate a predictive workflow.</p>
         
-        <form action="{{ url_for('create_session') }}" method="POST" id="create-session-form">
+        <form action="{{ url_for('create_session') }}" method="POST" id="create-session-form" class="form-layout">
             
-            <h4>1. Session Details</h4>
-            <label for="session_name">Session Name:</label>
-            <input type="text" id="session_name" name="session_name" placeholder="e.g., 'Field A - May 2025' or 'My North Field'" required>
-            
-            <label for="location">Location (City/Town):</label>
-            <input type="text" id="location" name="location" required placeholder="e.g., Alor Setar">
-            
-            <label for="size">Field Size (in Hectares):</label>
-            <input type="number" step="0.01" min="0.01" id="size" name="size" required placeholder="e.g., 10.5">
-
-            <h4>2. Workflow & Schedule</h4>
-            <label for="planting_date">Planned Planting Date (HLT 0):</label>
-            <input type="date" id="planting_date" name="planting_date" required>
-            
-            <label for="template_id">Workflow Template:</label>
-            <select id="template_id" name="template_id" required>
-                {% if templates %}
-                    {% for template in templates %}
-                        <option value="{{ template.id }}" data-description="{{ template.description or '' }}">
-                            {{ template.name }}
-                        </option>
-                    {% endfor %}
-                {% else %}
-                    <option value="" disabled>No workflow templates found in database.</option>
-                {% endif %}
-            </select>
-            <p id="template-description" style="font-size: 0.9em; color: #555; margin-top: -10px;"></p>
-
-            <hr>
-            <h4>3. Optional: Soil Test Data</h4>
-            <p style="font-size: 0.9em; color: #777; margin: -10px 0 15px 0;">
-                Leave these blank for automatic estimates, or fill them in for a more accurate prediction.
-            </p>
-            <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 15px;">
-                <div>
-                    <label for="SOIL_pH">Soil pH:</label>
-                    <input type="number" step="0.1" name="SOIL_pH" placeholder="e.g., 5.8">
+            <div style="background: #f8fafc; padding: 20px; border-radius: 8px; margin-bottom: 25px;">
+                <h4 style="margin-bottom: 15px; color: var(--primary);"><i class="fa-solid fa-map-location-dot"></i> 1. Field Details</h4>
+                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px;">
+                    <div>
+                        <label>Session Name</label>
+                        <input type="text" name="session_name" placeholder="e.g. North Field - Cycle 1" required>
+                    </div>
+                    <div>
+                        <label>Location (City)</label>
+                        <input type="text" name="location" placeholder="e.g. Alor Setar" required>
+                    </div>
                 </div>
-                <div>
-                    <label for="SOIL_CEC">Soil CEC (meq/100g):</label>
-                    <input type="number" step="0.1" name="SOIL_CEC" placeholder="e.g., 14.5">
-                </div>
-                <div>
-                    <label for="SOIL_OC">Soil Organic Carbon (%):</label>
-                    <input type="number" step="0.01" name="SOIL_OC" placeholder="e.g., 1.75">
-                </div>
+                <label>Field Size (Hectares)</label>
+                <input type="number" step="0.01" name="size" placeholder="10.5" required>
             </div>
-            
-            <hr>
-            <button type="submit" class="btn btn-primary btn-lg full-width" id="submit-btn" {% if not templates %}disabled{% endif %}>
-                Create Session & Run Prediction
+
+            <div style="background: #fefce8; padding: 20px; border-radius: 8px; margin-bottom: 25px;">
+                <h4 style="margin-bottom: 15px; color: #b45309;"><i class="fa-regular fa-calendar-check"></i> 2. Schedule</h4>
+                <label>Planned Planting Date (HLT 0)</label>
+                <input type="date" name="planting_date" required>
+                
+                <label>Workflow Template</label>
+                <select name="template_id" required>
+                    {% for template in templates %}
+                        <option value="{{ template.id }}">{{ template.name }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+
+            <button type="submit" class="btn full-width" style="font-size: 1.1em; padding: 15px;">
+                <i class="fa-solid fa-wand-magic-sparkles"></i> Generate Prediction & Schedule
             </button>
         </form>
     </div>
 </div>
-
-<script>
-    // Simple script to update the description when the user changes the dropdown
-    document.addEventListener('DOMContentLoaded', function() {
-        const templateSelect = document.getElementById('template_id');
-        const descriptionEl = document.getElementById('template-description');
-        const form = document.getElementById('create-session-form');
-        const submitBtn = document.getElementById('submit-btn');
-        
-        function updateDescription() {
-            try {
-                const selectedOption = templateSelect.options[templateSelect.selectedIndex];
-                const description = selectedOption.getAttribute('data-description');
-                descriptionEl.textContent = description;
-            } catch (e) {
-                if(descriptionEl) descriptionEl.textContent = '';
-            }
-        }
-        updateDescription(); // Run on page load
-        if(templateSelect) templateSelect.addEventListener('change', updateDescription);
-        
-        // HIGH-FIDELITY: Implement Loading State on Submit
-        if (form && submitBtn) {
-            form.addEventListener('submit', function() {
-                // Disable the button and change text
-                submitBtn.disabled = true;
-                submitBtn.textContent = 'Processing... Please Wait (30-60s)';
-                // Optional: Change button color
-                submitBtn.style.backgroundColor = '#f0ad4e'; 
-            });
-        }
-    });
-</script>
 {% endblock %}
