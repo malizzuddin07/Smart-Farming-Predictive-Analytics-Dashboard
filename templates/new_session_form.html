@@ -5,44 +5,123 @@
 {% block content %}
 <div class="container" style="max-width: 800px;">
     <div class="card">
-        <h2 style="text-align: center; border: none; margin-bottom: 10px;"><i class="fa-solid fa-seedling" style="color: var(--primary);"></i> Start New Session</h2>
-        <p style="text-align: center; color: var(--text-muted); margin-bottom: 30px;">Enter your field details to generate a predictive workflow.</p>
+        <h2 style="text-align: center; border: none; margin-bottom: 10px;">
+            <i class="fa-solid fa-seedling" style="color: var(--primary);"></i> Start New Session
+        </h2>
+        <p style="text-align: center; color: var(--text-muted); margin-bottom: 30px;">
+            Enter your field details below. The system will use Satellite Data automatically unless you provide your own soil test results.
+        </p>
         
         <form action="{{ url_for('create_session') }}" method="POST" id="create-session-form" class="form-layout">
             
-            <div style="background: #f8fafc; padding: 20px; border-radius: 8px; margin-bottom: 25px;">
-                <h4 style="margin-bottom: 15px; color: var(--primary);"><i class="fa-solid fa-map-location-dot"></i> 1. Field Details</h4>
+            <div style="background: #f8fafc; padding: 25px; border-radius: 8px; margin-bottom: 25px; border: 1px solid #e2e8f0;">
+                <h4 style="margin-bottom: 20px; color: var(--primary-dark); border-bottom: none;">
+                    <i class="fa-solid fa-map-location-dot"></i> 1. Field Details
+                </h4>
+                
                 <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px;">
                     <div>
-                        <label>Session Name</label>
-                        <input type="text" name="session_name" placeholder="e.g. North Field - Cycle 1" required>
+                        <label for="session_name">Session Name</label>
+                        <input type="text" id="session_name" name="session_name" placeholder="e.g. North Field - Cycle 1" required>
                     </div>
                     <div>
-                        <label>Location (City)</label>
-                        <input type="text" name="location" placeholder="e.g. Alor Setar" required>
+                        <label for="location">Location (City)</label>
+                        <input type="text" id="location" name="location" placeholder="e.g. Alor Setar" required>
                     </div>
                 </div>
-                <label>Field Size (Hectares)</label>
-                <input type="number" step="0.01" name="size" placeholder="10.5" required>
-            </div>
-
-            <div style="background: #fefce8; padding: 20px; border-radius: 8px; margin-bottom: 25px;">
-                <h4 style="margin-bottom: 15px; color: #b45309;"><i class="fa-regular fa-calendar-check"></i> 2. Schedule</h4>
-                <label>Planned Planting Date (HLT 0)</label>
-                <input type="date" name="planting_date" required>
                 
-                <label>Workflow Template</label>
-                <select name="template_id" required>
-                    {% for template in templates %}
-                        <option value="{{ template.id }}">{{ template.name }}</option>
-                    {% endfor %}
-                </select>
+                <label for="size">Field Size (Hectares)</label>
+                <input type="number" step="0.01" id="size" name="size" placeholder="e.g. 10.5" required>
             </div>
 
-            <button type="submit" class="btn full-width" style="font-size: 1.1em; padding: 15px;">
+            <div style="background: #fefce8; padding: 25px; border-radius: 8px; margin-bottom: 25px; border: 1px solid #fef08a;">
+                <h4 style="margin-bottom: 20px; color: #b45309; border-bottom: none;">
+                    <i class="fa-regular fa-calendar-check"></i> 2. Schedule
+                </h4>
+                
+                <label for="planting_date">Planned Planting Date (HLT 0)</label>
+                <input type="date" id="planting_date" name="planting_date" required>
+                
+                <label for="template_id">Workflow Template</label>
+                <select id="template_id" name="template_id" required>
+                    {% if templates %}
+                        {% for template in templates %}
+                            <option value="{{ template.id }}" data-description="{{ template.description or '' }}">
+                                {{ template.name }}
+                            </option>
+                        {% endfor %}
+                    {% else %}
+                        <option value="" disabled>No templates found.</option>
+                    {% endif %}
+                </select>
+                <p id="template-description" style="font-size: 0.9em; color: var(--text-muted); margin-top: -10px; font-style: italic;"></p>
+            </div>
+
+            <div style="background: #f0fdf4; padding: 25px; border-radius: 8px; margin-bottom: 25px; border: 1px solid #bbf7d0;">
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px;">
+                    <h4 style="margin: 0; color: #15803d; border-bottom: none;">
+                        <i class="fa-solid fa-flask"></i> 3. Soil Data (Optional)
+                    </h4>
+                    <span style="font-size: 0.8em; background: #dcfce7; color: #166534; padding: 4px 10px; border-radius: 20px;">
+                        Leave blank to use Satellite Data
+                    </span>
+                </div>
+                
+                <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 20px;">
+                    <div>
+                        <label for="SOIL_pH">Soil pH</label>
+                        <input type="number" step="0.1" id="SOIL_pH" name="SOIL_pH" placeholder="e.g. 5.8">
+                    </div>
+                    <div>
+                        <label for="SOIL_CEC">CEC (meq/100g)</label>
+                        <input type="number" step="0.1" id="SOIL_CEC" name="SOIL_CEC" placeholder="e.g. 14.5">
+                    </div>
+                    <div>
+                        <label for="SOIL_OC">Organic Carbon (%)</label>
+                        <input type="number" step="0.01" id="SOIL_OC" name="SOIL_OC" placeholder="e.g. 1.75">
+                    </div>
+                </div>
+            </div>
+
+            <button type="submit" class="btn full-width" id="submit-btn" style="font-size: 1.1em; padding: 15px;">
                 <i class="fa-solid fa-wand-magic-sparkles"></i> Generate Prediction & Schedule
             </button>
         </form>
     </div>
 </div>
+
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        // Template Description Logic
+        const templateSelect = document.getElementById('template_id');
+        const descriptionEl = document.getElementById('template-description');
+        
+        function updateDescription() {
+            try {
+                const selectedOption = templateSelect.options[templateSelect.selectedIndex];
+                const description = selectedOption.getAttribute('data-description');
+                descriptionEl.textContent = description;
+            } catch (e) {
+                if(descriptionEl) descriptionEl.textContent = '';
+            }
+        }
+        
+        if(templateSelect) {
+            updateDescription();
+            templateSelect.addEventListener('change', updateDescription);
+        }
+
+        // Loading State for Submit Button
+        const form = document.getElementById('create-session-form');
+        const submitBtn = document.getElementById('submit-btn');
+        
+        if (form && submitBtn) {
+            form.addEventListener('submit', function() {
+                submitBtn.disabled = true;
+                submitBtn.innerHTML = '<i class="fa-solid fa-circle-notch fa-spin"></i> Processing... (30-60s)';
+                submitBtn.style.opacity = '0.8';
+            });
+        }
+    });
+</script>
 {% endblock %}
