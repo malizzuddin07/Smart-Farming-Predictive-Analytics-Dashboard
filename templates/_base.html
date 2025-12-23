@@ -1,211 +1,377 @@
 <!DOCTYPE html>
 <html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>{% block title %}Smart Farming{% endblock %}</title>
-    
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=Poppins:wght@500;600;700&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=Poppins:wght@500;600;700&display=swap"
+      rel="stylesheet"
+    />
+    <link
+      rel="stylesheet"
+      href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css"
+    />
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 
     <style>
-        /* --- THEME VARIABLES --- */
-        :root {
-            --primary: #2d6a4f;       /* Deep Forest Green */
-            --primary-light: #40916c; /* Lighter Leaf Green */
-            --primary-dark: #1b4332;  /* Dark Green */
-            --accent: #d4a373;        /* Harvest Gold/Wood */
-            --bg-body: #f0f7f4;       /* Mint White */
-            --surface: #ffffff;
-            --text-main: #1f2937;
-            --text-muted: #6b7280;
-            --danger: #ef4444;
-            --success: #10b981;
-            --warning: #f59e0b;
-            --radius: 12px;
-            --shadow-sm: 0 1px 3px rgba(0,0,0,0.1);
-            --shadow-md: 0 4px 6px -1px rgba(0,0,0,0.1), 0 2px 4px -1px rgba(0,0,0,0.06);
-            --shadow-lg: 0 10px 15px -3px rgba(0,0,0,0.1), 0 4px 6px -2px rgba(0,0,0,0.05);
+      /* --- THEME VARIABLES --- */
+      :root {
+        --primary: #2d6a4f; /* Deep Forest Green */
+        --primary-light: #40916c; /* Lighter Leaf Green */
+        --primary-dark: #1b4332; /* Dark Green */
+        --accent: #d4a373; /* Harvest Gold/Wood */
+        --bg-body: #f0f7f4; /* Mint White */
+        --surface: #ffffff;
+        --text-main: #1f2937;
+        --text-muted: #6b7280;
+        --danger: #ef4444;
+        --success: #10b981;
+        --warning: #f59e0b;
+        --radius: 12px;
+        --shadow-sm: 0 1px 3px rgba(0, 0, 0, 0.1);
+        --shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.1),
+          0 2px 4px -1px rgba(0, 0, 0, 0.06);
+        --shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.1),
+          0 4px 6px -2px rgba(0, 0, 0, 0.05);
+      }
+
+      body {
+        font-family: "Inter", sans-serif;
+        margin: 0;
+        background-color: var(--bg-body);
+        color: var(--text-main);
+        line-height: 1.6;
+      }
+
+      /* --- MODERN NAVIGATION --- */
+      header {
+        background: var(--surface);
+        padding: 15px 40px;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        box-shadow: var(--shadow-sm);
+        position: sticky;
+        top: 0;
+        z-index: 100;
+        border-bottom: 3px solid var(--primary);
+      }
+      header h1 {
+        margin: 0;
+        font-family: "Poppins", sans-serif;
+        font-size: 1.5em;
+        color: var(--primary-dark);
+        display: flex;
+        align-items: center;
+        gap: 10px;
+      }
+      header h1 i {
+        color: var(--accent);
+      } /* The leaf icon color */
+
+      nav a {
+        color: var(--text-muted);
+        text-decoration: none;
+        margin-left: 10px;
+        padding: 10px 16px;
+        border-radius: 50px;
+        font-weight: 500;
+        transition: all 0.3s ease;
+        font-size: 0.95em;
+      }
+      nav a:hover {
+        background-color: #e6f4ea;
+        color: var(--primary);
+      }
+      nav a.active {
+        background-color: var(--primary);
+        color: white;
+        box-shadow: 0 4px 10px rgba(45, 106, 79, 0.3);
+      }
+      nav span {
+        margin-right: 15px;
+        font-weight: 600;
+        color: var(--primary-dark);
+      }
+
+      /* --- LAYOUT & CARDS --- */
+      .container {
+        padding: 30px;
+        max-width: 1200px;
+        margin: 0 auto;
+      }
+      .grid-container {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(350px, 1fr));
+        gap: 30px;
+      }
+
+      .card {
+        background-color: var(--surface);
+        padding: 30px;
+        border-radius: var(--radius);
+        box-shadow: var(--shadow-md);
+        border: 1px solid rgba(0, 0, 0, 0.02);
+        transition: transform 0.2s, box-shadow 0.2s;
+        position: relative;
+        overflow: hidden;
+      }
+      .card:hover {
+        transform: translateY(-3px);
+        box-shadow: var(--shadow-lg);
+      }
+
+      h2,
+      h3,
+      h4 {
+        font-family: "Poppins", sans-serif;
+        color: var(--primary-dark);
+        margin-top: 0;
+      }
+      h2 {
+        border-bottom: 2px solid #e5e7eb;
+        padding-bottom: 15px;
+        margin-bottom: 25px;
+        font-size: 1.5em;
+      }
+
+      /* --- BUTTONS (Gradient & Pill) --- */
+      .btn,
+      button[type="submit"] {
+        background: linear-gradient(
+          135deg,
+          var(--primary),
+          var(--primary-light)
+        );
+        color: white;
+        padding: 12px 24px;
+        border: none;
+        border-radius: 8px;
+        cursor: pointer;
+        font-weight: 600;
+        letter-spacing: 0.5px;
+        transition: all 0.3s;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        gap: 8px;
+        text-decoration: none;
+        box-shadow: 0 4px 6px rgba(45, 106, 79, 0.2);
+      }
+      .btn:hover,
+      button[type="submit"]:hover {
+        background: linear-gradient(
+          135deg,
+          var(--primary-dark),
+          var(--primary)
+        );
+        transform: translateY(-1px);
+        box-shadow: 0 6px 12px rgba(45, 106, 79, 0.3);
+      }
+      .btn-secondary {
+        background: white !important;
+        color: var(--text-muted) !important;
+        border: 1px solid #d1d5db !important;
+        box-shadow: none !important;
+      }
+      .btn-secondary:hover {
+        background: #f9fafb !important;
+        color: var(--text-main) !important;
+        border-color: #9ca3af !important;
+      }
+      .btn-danger {
+        background: var(--danger) !important;
+      }
+      .full-width {
+        width: 100%;
+      }
+
+      /* --- FORMS --- */
+      .form-layout label {
+        font-weight: 600;
+        color: var(--text-main);
+        margin-bottom: 8px;
+        display: block;
+      }
+      input[type="text"],
+      input[type="number"],
+      input[type="date"],
+      input[type="password"],
+      select,
+      textarea {
+        width: 100%;
+        padding: 12px 15px;
+        margin-bottom: 20px;
+        border: 2px solid #e5e7eb;
+        border-radius: 8px;
+        background-color: #f9fafb;
+        font-size: 1em;
+        transition: 0.3s;
+        color: var(--text-main);
+        box-sizing: border-box;
+      }
+      input:focus,
+      select:focus,
+      textarea:focus {
+        border-color: var(--primary);
+        background-color: white;
+        outline: none;
+        box-shadow: 0 0 0 3px rgba(45, 106, 79, 0.1);
+      }
+
+      /* --- STAT CARDS --- */
+      .stat-card {
+        background: linear-gradient(135deg, #ffffff 0%, #f0fdf4 100%);
+        border: 1px solid #dcfce7;
+        text-align: center;
+        padding: 20px;
+        border-radius: 12px;
+      }
+      .stat-card h4 {
+        color: var(--text-muted);
+        font-size: 0.9em;
+        text-transform: uppercase;
+        letter-spacing: 1px;
+        margin-bottom: 5px;
+      }
+      .stat-card p {
+        font-size: 1.6em;
+        font-weight: 700;
+        color: var(--primary);
+        margin: 0;
+        font-family: "Poppins", sans-serif;
+      }
+      .stat-card i {
+        font-size: 1.5em;
+        color: var(--primary-light);
+        margin-bottom: 10px;
+        display: block;
+      }
+
+      /* --- ALERTS --- */
+      .message {
+        padding: 15px;
+        border-radius: 8px;
+        margin-bottom: 20px;
+        border-left: 5px solid;
+        display: flex;
+        align-items: center;
+        gap: 15px;
+      }
+      .message.success {
+        background: #ecfdf5;
+        border-color: var(--success);
+        color: #065f46;
+      }
+      .message.warning {
+        background: #fffbeb;
+        border-color: var(--warning);
+        color: #92400e;
+      }
+      .message.danger {
+        background: #fef2f2;
+        border-color: var(--danger);
+        color: #991b1b;
+      }
+
+      /* --- WEATHER WIDGETS --- */
+      .forecast-day {
+        background: white !important;
+        border: 1px solid #e5e7eb !important;
+        box-shadow: var(--shadow-sm);
+        transition: transform 0.2s;
+      }
+      .forecast-day:hover {
+        transform: translateY(-5px);
+        border-color: var(--primary-light) !important;
+      }
+
+      /* --- UTILS --- */
+      .auth-container {
+        max-width: 400px;
+        margin-top: 60px;
+      }
+
+      /* --- MOBILE RESPONSIVE FIX --- */
+      @media (max-width: 768px) {
+        header {
+          flex-direction: column; /* Stack logo and menu vertically */
+          padding: 15px; /* Reduce padding to save space */
+          gap: 15px; /* Add space between logo and menu */
         }
 
-        body { 
-            font-family: 'Inter', sans-serif; 
-            margin: 0; 
-            background-color: var(--bg-body); 
-            color: var(--text-main); 
-            line-height: 1.6; 
+        header h1 {
+          font-size: 1.4em; /* Make title slightly smaller */
+          width: 100%;
+          justify-content: center; /* Center the logo */
         }
 
-        /* --- MODERN NAVIGATION --- */
-        header { 
-            background: var(--surface);
-            padding: 15px 40px; 
-            display: flex; 
-            justify-content: space-between; 
-            align-items: center; 
-            box-shadow: var(--shadow-sm);
-            position: sticky;
-            top: 0;
-            z-index: 100;
-            border-bottom: 3px solid var(--primary);
-        }
-        header h1 { 
-            margin: 0; 
-            font-family: 'Poppins', sans-serif; 
-            font-size: 1.5em; 
-            color: var(--primary-dark); 
-            display: flex;
-            align-items: center;
-            gap: 10px;
-        }
-        header h1 i { color: var(--accent); } /* The leaf icon color */
-
-        nav a { 
-            color: var(--text-muted); 
-            text-decoration: none; 
-            margin-left: 10px; 
-            padding: 10px 16px; 
-            border-radius: 50px; 
-            font-weight: 500; 
-            transition: all 0.3s ease;
-            font-size: 0.95em;
-        }
-        nav a:hover { 
-            background-color: #e6f4ea; 
-            color: var(--primary); 
-        }
-        nav a.active { 
-            background-color: var(--primary); 
-            color: white; 
-            box-shadow: 0 4px 10px rgba(45, 106, 79, 0.3);
-        }
-        nav span { margin-right: 15px; font-weight: 600; color: var(--primary-dark); }
-
-        /* --- LAYOUT & CARDS --- */
-        .container { padding: 30px; max-width: 1200px; margin: 0 auto; }
-        .grid-container { display: grid; grid-template-columns: repeat(auto-fit, minmax(350px, 1fr)); gap: 30px; }
-        
-        .card { 
-            background-color: var(--surface); 
-            padding: 30px; 
-            border-radius: var(--radius); 
-            box-shadow: var(--shadow-md); 
-            border: 1px solid rgba(0,0,0,0.02);
-            transition: transform 0.2s, box-shadow 0.2s;
-            position: relative;
-            overflow: hidden;
-        }
-        .card:hover { transform: translateY(-3px); box-shadow: var(--shadow-lg); }
-        
-        h2, h3, h4 { font-family: 'Poppins', sans-serif; color: var(--primary-dark); margin-top: 0; }
-        h2 { border-bottom: 2px solid #e5e7eb; padding-bottom: 15px; margin-bottom: 25px; font-size: 1.5em; }
-        
-        /* --- BUTTONS (Gradient & Pill) --- */
-        .btn, button[type="submit"] { 
-            background: linear-gradient(135deg, var(--primary), var(--primary-light));
-            color: white; 
-            padding: 12px 24px; 
-            border: none; 
-            border-radius: 8px; 
-            cursor: pointer; 
-            font-weight: 600; 
-            letter-spacing: 0.5px;
-            transition: all 0.3s; 
-            display: inline-flex;
-            align-items: center;
-            justify-content: center;
-            gap: 8px;
-            text-decoration: none;
-            box-shadow: 0 4px 6px rgba(45, 106, 79, 0.2);
-        }
-        .btn:hover, button[type="submit"]:hover { 
-            background: linear-gradient(135deg, var(--primary-dark), var(--primary));
-            transform: translateY(-1px);
-            box-shadow: 0 6px 12px rgba(45, 106, 79, 0.3);
-        }
-        .btn-secondary { 
-            background: white !important; 
-            color: var(--text-muted) !important; 
-            border: 1px solid #d1d5db !important;
-            box-shadow: none !important;
-        }
-        .btn-secondary:hover { background: #f9fafb !important; color: var(--text-main) !important; border-color: #9ca3af !important; }
-        .btn-danger { background: var(--danger) !important; }
-        .full-width { width: 100%; }
-
-        /* --- FORMS --- */
-        .form-layout label { font-weight: 600; color: var(--text-main); margin-bottom: 8px; display: block; }
-        input[type="text"], input[type="number"], input[type="date"], input[type="password"], select, textarea { 
-            width: 100%; padding: 12px 15px; margin-bottom: 20px; 
-            border: 2px solid #e5e7eb; border-radius: 8px; 
-            background-color: #f9fafb; font-size: 1em; transition: 0.3s; color: var(--text-main);
-            box-sizing: border-box;
-        }
-        input:focus, select:focus, textarea:focus { 
-            border-color: var(--primary); background-color: white; outline: none; 
-            box-shadow: 0 0 0 3px rgba(45, 106, 79, 0.1); 
+        nav {
+          display: flex;
+          flex-wrap: wrap; /* Allow buttons to wrap to next line */
+          justify-content: center; /* Center the buttons */
+          gap: 8px; /* Space between buttons */
+          width: 100%;
         }
 
-        /* --- STAT CARDS --- */
-        .stat-card { 
-            background: linear-gradient(135deg, #ffffff 0%, #f0fdf4 100%);
-            border: 1px solid #dcfce7;
-            text-align: center; padding: 20px; border-radius: 12px; 
+        nav span {
+          display: none; /* Hide "Welcome User" text on mobile to save space */
         }
-        .stat-card h4 { color: var(--text-muted); font-size: 0.9em; text-transform: uppercase; letter-spacing: 1px; margin-bottom: 5px; }
-        .stat-card p { font-size: 1.6em; font-weight: 700; color: var(--primary); margin: 0; font-family: 'Poppins', sans-serif; }
-        .stat-card i { font-size: 1.5em; color: var(--primary-light); margin-bottom: 10px; display: block; }
 
-        /* --- ALERTS --- */
-        .message { padding: 15px; border-radius: 8px; margin-bottom: 20px; border-left: 5px solid; display: flex; align-items: center; gap: 15px; }
-        .message.success { background: #ecfdf5; border-color: var(--success); color: #065f46; }
-        .message.warning { background: #fffbeb; border-color: var(--warning); color: #92400e; }
-        .message.danger { background: #fef2f2; border-color: var(--danger); color: #991b1b; }
-
-        /* --- WEATHER WIDGETS --- */
-        .forecast-day { 
-            background: white !important; border: 1px solid #e5e7eb !important; 
-            box-shadow: var(--shadow-sm); transition: transform 0.2s; 
+        nav a {
+          margin: 0; /* Remove side margins */
+          padding: 8px 12px; /* Smaller button size */
+          font-size: 0.85em; /* Smaller text */
+          flex-grow: 1; /* Make buttons stretch to fill width */
+          text-align: center;
+          white-space: nowrap; /* Prevent text inside buttons from breaking */
         }
-        .forecast-day:hover { transform: translateY(-5px); border-color: var(--primary-light) !important; }
-
-        /* --- UTILS --- */
-        .auth-container { max-width: 400px; margin-top: 60px; }
+      }
     </style>
-</head>
-<body>
+  </head>
+  <body>
     <header>
-        <h1><i class="fa-solid fa-wheat-awn"></i> Smart Farming</h1>
-        <nav>
-            {% if session.ic %}
-                <span><i class="fa-regular fa-user-circle"></i> {{ name }}</span>
-                <a href="{{ url_for('dashboard_home') }}" class="{{ 'active' if request.endpoint == 'dashboard_home' else '' }}"><i class="fa-solid fa-seedling"></i> My Sessions</a>
-                <a href="{{ url_for('settings_page') }}" class="{{ 'active' if request.endpoint == 'settings_page' else '' }}"><i class="fa-solid fa-sliders"></i> Settings</a>
-                <a href="{{ url_for('logout') }}"><i class="fa-solid fa-right-from-bracket"></i> Logout</a>
-            {% else %}
-                <span>Welcome, Guest!</span>
-            {% endif %}
-        </nav>
+      <h1><i class="fa-solid fa-wheat-awn"></i> Smart Farming</h1>
+      <nav>
+        {% if session.ic %}
+        <span><i class="fa-regular fa-user-circle"></i> {{ name }}</span>
+        <a
+          href="{{ url_for('dashboard_home') }}"
+          class="{{ 'active' if request.endpoint == 'dashboard_home' else '' }}"
+          ><i class="fa-solid fa-seedling"></i> My Sessions</a
+        >
+        <a
+          href="{{ url_for('settings_page') }}"
+          class="{{ 'active' if request.endpoint == 'settings_page' else '' }}"
+          ><i class="fa-solid fa-sliders"></i> Settings</a
+        >
+        <a href="{{ url_for('logout') }}"
+          ><i class="fa-solid fa-right-from-bracket"></i> Logout</a
+        >
+        {% else %}
+        <span>Welcome, Guest!</span>
+        {% endif %}
+      </nav>
     </header>
 
     <main>
-        <div class="container" style="padding-top: 10px; padding-bottom: 10px;">
-            {% with messages = get_flashed_messages(with_categories=true) %}
-                {% if messages %}
-                    {% for category, message in messages %}
-                        <div class="message {{ category }}">
-                            <i class="fa-solid {{ 'fa-check-circle' if category == 'success' else 'fa-exclamation-triangle' }}"></i>
-                            {{ message }}
-                        </div>
-                    {% endfor %}
-                {% endif %}
-            {% endwith %}
+      <div class="container" style="padding-top: 10px; padding-bottom: 10px">
+        {% with messages = get_flashed_messages(with_categories=true) %} {% if
+        messages %} {% for category, message in messages %}
+        <div class="message {{ category }}">
+          <i
+            class="fa-solid {{ 'fa-check-circle' if category == 'success' else 'fa-exclamation-triangle' }}"
+          ></i>
+          {{ message }}
         </div>
+        {% endfor %} {% endif %} {% endwith %}
+      </div>
 
-        {% block content %}{% endblock %}
+      {% block content %}{% endblock %}
     </main>
-</body>
+  </body>
 </html>
