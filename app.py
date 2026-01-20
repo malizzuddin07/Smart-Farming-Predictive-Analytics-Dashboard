@@ -734,8 +734,63 @@ def session_dashboard(session_id):
     )
 
 
-@app.route("/update_step", methods=["POST"])
+@app.route('/update_step', methods=['POST'])
 def update_step():
+    if 'ic' not in session: return redirect(url_for('login_page'))
+    
+    f = request.form
+    task_id = f.get('task_id')
+    new_status = f.get('status')
+    
+    # Safety Check: If data is missing, just go back home
+    if not task_id or not new_status:
+        flash("Error: Missing task ID or status.", "error")
+        return redirect(url_for('dashboard_home'))
+
+    conn = get_db_connection()
+    cur = conn.cursor(dictionary=True) # Use dictionary cursor for easy lookup
+    
+    try:
+        # 1. Fetch the Session ID and current details first (Prevents crash if form is missing session_id)
+        cur.execute("SELECT session_id, remarks, detail1, detail2 FROM farmer_task_steps WHERE id=%s", (task_id,))
+        task = cur.fetchone()
+        
+        if not task:
+            flash("Task not found.", "error")
+            return redirect(url_for('dashboard_home'))
+            
+        session_id = task['session_id'] 
+        
+        # 2. Prepare new values (If form sends None, keep existing DB value)
+        remarks = f.get('remarks') if f.get('remarks') is not None else task['remarks']
+        detail1 = f.get('detail1') if f.get('detail1') is not None else task['detail1']
+        detail2 = f.get('detail2') if f.get('detail2') is not None else task['detail2']
+        completed_at = datetime.now() if new_status == 'completed' else None
+
+        # 3. Perform the Update
+        cur.execute("""
+            UPDATE farmer_task_steps 
+            SET status=%s, remarks=%s, detail1=%s, detail2=%s, completed_at=%s 
+            WHERE id=%s
+        """, (new_status, remarks, detail1, detail2, completed_at, task_id))
+        
+        conn.commit()
+        flash("Task updated successfully!", "success")
+        
+    except Exception as e:
+        logger.error(f"Update Error: {e}")
+        flash(f"Update failed: {e}", "error")
+        session_id = f.get('session_id') 
+        
+    finally:
+        cur.close()
+        conn.close()
+
+    # 4. Redirect safely
+    if session_id:
+        return redirect(url_for('session_dashboard', session_id=session_id))
+    else:
+        return redirect(url_for('dashboard_home'))
     if "ic" not in session:
         return redirect(url_for("login_page"))
 

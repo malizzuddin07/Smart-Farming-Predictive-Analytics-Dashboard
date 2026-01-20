@@ -1,52 +1,149 @@
-{% extends "_base.html" %}
+{% extends "_base.html" %} {% block title %}Workflow Schedule{% endblock %} {%
+block content %}
+<div class="container" style="max-width: 900px">
+  <h2 style="border: none">My Workflow Schedule</h2>
 
-{% block title %}Workflow Schedule{% endblock %}
-
-{% block content %}
-<div class="container" style="max-width: 900px;">
-    <h2 style="border: none;">My Workflow Schedule</h2>
-
-    {% if not tasks %}
-        <div class="card" style="text-align: center; padding: 40px;">
-            <h3>No tasks found.</h3>
-            <p>You don't have a farming schedule yet.</p>
-            <a href="{{ url_for('new_session_form') }}" class="btn">+ Start a New Season</a>
-        </div>
-    {% endif %}
-
-    {% for task in tasks %}
-    <div class="card" style="margin-bottom: 20px; border-left: 5px solid {{ '#10b981' if task.status == 'completed' else '#f59e0b' }};">
-        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px;">
-            <h3 style="margin: 0; font-size: 1.2em;">{{ task.task_name }}</h3>
-            <span style="background: #f3f4f6; padding: 5px 12px; border-radius: 20px; font-size: 0.85em; font-weight: 600;">
-                {{ task.start_date.strftime('%a, %d %b %Y') if task.start_date else 'N/A' }}
-            </span>
-        </div>
-
-        <form method="POST" action="/update_step" id="form_{{ loop.index }}">
-            <input type="hidden" name="task_id" value="{{ task.id }}">
-            
-            <div style="display: grid; grid-template-columns: 1fr 2fr; gap: 15px; margin-bottom: 15px;">
-                <div>
-                    <label style="font-size: 0.9em;">Status</label>
-                    <select name="status" id="status_{{ loop.index }}" {% if task.status == 'completed' or task.status == 'skipped' %}disabled{% endif %}>
-                        <option value="soon" {% if task.status == 'soon' %}selected{% endif %}>Soon</option>
-                        <option value="in_process" {% if task.status == 'in_process' %}selected{% endif %}>In Process</option>
-                        <option value="completed" {% if task.status == 'completed' %}selected{% endif %}>Completed</option>
-                        <option value="skipped" {% if task.status == 'skipped' %}selected{% endif %}>Skipped</option>
-                    </select>
-                </div>
-                <div>
-                    <label style="font-size: 0.9em;">Remarks</label>
-                    <input type="text" name="remarks" placeholder="Add notes..." value="{{ task.remarks or '' }}" {% if task.status == 'completed' %}disabled{% endif %}>
-                </div>
-            </div>
-
-            {% if task.status != 'completed' and task.status != 'skipped' %}
-                <button type="submit" class="btn" style="padding: 8px 20px; font-size: 0.9em;">Update Status</button>
-            {% endif %}
-        </form>
+  {% if not tasks %}
+  <div class="card" style="text-align: center; padding: 40px">
+    <h3>No tasks found.</h3>
+    <p>You don't have a farming schedule yet.</p>
+    <a href="{{ url_for('new_session_form') }}" class="btn"
+      >+ Start a New Season</a
+    >
+  </div>
+  {% endif %} {% for task in tasks %}
+  <div
+    class="card"
+    style="margin-bottom: 20px; border-left: 5px solid {{ '#10b981' if task.status == 'completed' else '#f59e0b' }};"
+  >
+    <div
+      style="
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 15px;
+      "
+    >
+      <h3 style="margin: 0; font-size: 1.2em">{{ task.task_name }}</h3>
+      <span
+        style="
+          background: #f3f4f6;
+          padding: 5px 12px;
+          border-radius: 20px;
+          font-size: 0.85em;
+          font-weight: 600;
+        "
+      >
+        {{ task.start_date.strftime('%a, %d %b %Y') if task.start_date else
+        'N/A' }}
+      </span>
     </div>
-    {% endfor %}
+
+    <form method="POST" action="/update_step" id="form_{{ loop.index }}">
+      <input type="hidden" name="session_id" value="{{ task.session_id }}" />
+      <div
+        style="
+          display: grid;
+          grid-template-columns: 1fr 2fr;
+          gap: 15px;
+          margin-bottom: 15px;
+        "
+      >
+        <div>
+          <label style="font-size: 0.9em">Status</label>
+          <select
+            name="status"
+            id="status_{{ loop.index }}"
+            {%
+            if
+            task.status=""
+            ="completed"
+            or
+            task.status=""
+            ="skipped"
+            %}disabled{%
+            endif
+            %}
+          >
+            <option
+              value="soon"
+              {%
+              if
+              task.status=""
+              ="soon"
+              %}selected{%
+              endif
+              %}
+            >
+              Soon
+            </option>
+            <option
+              value="in_process"
+              {%
+              if
+              task.status=""
+              ="in_process"
+              %}selected{%
+              endif
+              %}
+            >
+              In Process
+            </option>
+            <option
+              value="completed"
+              {%
+              if
+              task.status=""
+              ="completed"
+              %}selected{%
+              endif
+              %}
+            >
+              Completed
+            </option>
+            <option
+              value="skipped"
+              {%
+              if
+              task.status=""
+              ="skipped"
+              %}selected{%
+              endif
+              %}
+            >
+              Skipped
+            </option>
+          </select>
+        </div>
+        <div>
+          <label style="font-size: 0.9em">Remarks</label>
+          <input
+            type="text"
+            name="remarks"
+            placeholder="Add notes..."
+            value="{{ task.remarks or '' }}"
+            {%
+            if
+            task.status=""
+            ="completed"
+            %}disabled{%
+            endif
+            %}
+          />
+        </div>
+      </div>
+
+      {% if task.status != 'completed' and task.status != 'skipped' %}
+      <button
+        type="submit"
+        class="btn"
+        style="padding: 8px 20px; font-size: 0.9em"
+      >
+        Update Status
+      </button>
+      {% endif %}
+    </form>
+  </div>
+  {% endfor %}
 </div>
 {% endblock %}
