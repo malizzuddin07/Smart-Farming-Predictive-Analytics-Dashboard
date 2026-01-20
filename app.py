@@ -395,11 +395,18 @@ def create_session():
             
         # Create Tasks
         cur.execute("SELECT task_name, days_offset FROM workflow_template_steps WHERE template_id=%s", (f['template_id'],))
-        for step in cur.fetchall():
+        # IMPROVEMENT: Fetch all steps first to iterate cleanly
+        steps = cur.fetchall()
+        
+        for step in steps:
             t_date = p_date + timedelta(days=step['days_offset'])
             status = 'skipped' if t_date < date.today() else ('in_process' if t_date == date.today() else 'soon')
-            cur.execute("INSERT INTO farmer_task_steps (session_id, user_ic, task_id, start_date, status) VALUES (%s,%s,%s,%s,%s)",
-                       (sess_id, session['ic'], step['task_name'], t_date, status))
+            
+            # IMPROVEMENT: Insert step['task_name'] into column 'task_name' (previously was task_id)
+            cur.execute("""
+                INSERT INTO farmer_task_steps (session_id, user_ic, task_name, start_date, status) 
+                VALUES (%s,%s,%s,%s,%s)
+            """, (sess_id, session['ic'], step['task_name'], t_date, status))
                        
         conn.commit(); cur.close(); conn.close()
         flash("Session Created!", "success"); return redirect(url_for('session_dashboard', session_id=sess_id))
@@ -415,6 +422,22 @@ def session_dashboard(session_id):
     if not conn: return redirect(url_for('dashboard_home'))
     
     cur = conn.cursor(dictionary=True)
+    
+    # IMPROVEMENT: AUTO-UPDATE TASK STATUSES
+    # Before we fetch data, check if any 'soon' tasks have become 'in_process' or overdue
+    try:
+        today_str = date.today().strftime('%Y-%m-%d')
+        # Update 'soon' tasks that are due TODAY or in the PAST to 'in_process'
+        cur.execute("""
+            UPDATE farmer_task_steps 
+            SET status = 'in_process' 
+            WHERE session_id = %s AND start_date <= %s AND status = 'soon'
+        """, (session_id, today_str))
+        conn.commit()
+    except Exception as e:
+        logger.error(f"Auto-Update Status Error: {e}")
+    
+    # Fetch Session Data
     cur.execute("SELECT * FROM planting_sessions WHERE session_id=%s AND user_ic=%s", (session_id, session['ic']))
     sess_data = cur.fetchone()
     
@@ -472,7 +495,7 @@ def session_dashboard(session_id):
     # 1. Get 3-Day Forecast
     weather_3day = get_3day_forecast(sess_data['longitude'], sess_data['latitude'])
     
-    # 2. Get Historical SRAD (Fixing the missing graph from previous request)
+    # 2. Get Historical SRAD
     srad_data = get_historical_srad(sess_data['longitude'], sess_data['latitude'])
 
     return render_template("session_dashboard.html", 
@@ -539,7 +562,7 @@ def timestamp_to_date_filter(s):
     try: return datetime.fromtimestamp(int(s))
     except: return None
     
-# --- SETTINGS ROUTES (Add these to app.py) ---
+# --- SETTINGS ROUTES ---
 
 @app.route('/update_profile', methods=['POST'])
 def update_profile():
