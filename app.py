@@ -731,6 +731,7 @@ def session_dashboard(session_id):
         weather_forecast=weather_3day,
         historical_srad_json=json.dumps(srad_data),
         norm_params_json=json.dumps(normalization_params),
+        current_sort=sort # FIXED: Pass current sort to template so it doesn't reset
     )
 
 
@@ -742,17 +743,17 @@ def update_step():
     task_id = f.get('task_id')
     new_status = f.get('status')
     
-    # Safety Check: If data is missing, just go back home
-    if not task_id or not new_status:
-        flash("Error: Missing task ID or status.", "error")
+    # Safety Check
+    if not task_id:
+        flash("Error: Missing task ID.", "error")
         return redirect(url_for('dashboard_home'))
 
     conn = get_db_connection()
     cur = conn.cursor(dictionary=True) # Use dictionary cursor for easy lookup
     
     try:
-        # 1. Fetch the Session ID and current details first (Prevents crash if form is missing session_id)
-        cur.execute("SELECT session_id, remarks, detail1, detail2 FROM farmer_task_steps WHERE id=%s", (task_id,))
+        # 1. Fetch the Session ID and current details first
+        cur.execute("SELECT session_id, status, remarks, detail1, detail2 FROM farmer_task_steps WHERE id=%s", (task_id,))
         task = cur.fetchone()
         
         if not task:
@@ -761,21 +762,27 @@ def update_step():
             
         session_id = task['session_id'] 
         
-        # 2. Prepare new values (If form sends None, keep existing DB value)
+        # 2. Prepare new values 
+        # If new_status is missing (e.g. disabled input), keep old status
+        final_status = new_status if new_status else task['status']
+        
+        # Determine completion time
+        completed_at = datetime.now() if final_status == 'completed' else None
+        
+        # Prepare remarks/details (keep existing if not sent)
         remarks = f.get('remarks') if f.get('remarks') is not None else task['remarks']
         detail1 = f.get('detail1') if f.get('detail1') is not None else task['detail1']
         detail2 = f.get('detail2') if f.get('detail2') is not None else task['detail2']
-        completed_at = datetime.now() if new_status == 'completed' else None
 
         # 3. Perform the Update
         cur.execute("""
             UPDATE farmer_task_steps 
             SET status=%s, remarks=%s, detail1=%s, detail2=%s, completed_at=%s 
             WHERE id=%s
-        """, (new_status, remarks, detail1, detail2, completed_at, task_id))
+        """, (final_status, remarks, detail1, detail2, completed_at, task_id))
         
         conn.commit()
-        flash("Task updated successfully!", "success")
+        # flash("Task updated successfully!", "success")
         
     except Exception as e:
         logger.error(f"Update Error: {e}")
@@ -791,50 +798,6 @@ def update_step():
         return redirect(url_for('session_dashboard', session_id=session_id))
     else:
         return redirect(url_for('dashboard_home'))
-    if "ic" not in session:
-        return redirect(url_for("login_page"))
-
-    conn = get_db_connection()
-    cur = conn.cursor()
-    f = request.form
-
-    try:
-        # 1. Use .get() so it returns None instead of crashing if the field is missing
-        remarks = f.get("remarks")
-        detail1 = f.get("detail1")
-        detail2 = f.get("detail2")
-
-        # 2. Determine completion time
-        # If marking as 'completed', set NOW. If moving back to 'process', clear it (None).
-        completed_at = datetime.now() if f["status"] == "completed" else None
-
-        # 3. SMART UPDATE:
-        # COALESCE(%s, remarks) means: "If the new value is None, keep the existing 'remarks' value."
-        cur.execute(
-            """
-            UPDATE farmer_task_steps 
-            SET status=%s, 
-                remarks=COALESCE(%s, remarks), 
-                detail1=COALESCE(%s, detail1), 
-                detail2=COALESCE(%s, detail2), 
-                completed_at=%s 
-            WHERE id=%s
-        """,
-            (f["status"], remarks, detail1, detail2, completed_at, f["task_id"]),
-        )
-
-        conn.commit()
-
-    except Exception as e:
-        logger.error(f"Update Step Failed: {e}")
-        # Optional: Flash the error so you can see it on screen during testing
-        flash(f"Error updating task: {e}", "error")
-
-    finally:
-        cur.close()
-        conn.close()
-
-    return redirect(url_for("session_dashboard", session_id=f["session_id"]))
 
 
 @app.route("/delete_session/<int:session_id>", methods=["POST"])

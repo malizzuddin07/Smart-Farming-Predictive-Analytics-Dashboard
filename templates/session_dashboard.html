@@ -152,19 +152,13 @@
                         <input type="hidden" name="task_id" value="{{ task.id }}">
                         <input type="hidden" name="session_id" value="{{ session_details.session_id }}">
                         
-                        {% set is_disabled = (task.status == 'completed') %}
-                        
-                        <select name="status" style="margin-bottom: 8px; font-size: 0.9em; padding: 5px;" {% if is_disabled %}disabled{% endif %}>
+                        <select name="status" style="margin-bottom: 8px; font-size: 0.9em; padding: 5px;">
                             <option value="soon" {% if task.status == 'soon' %}selected{% endif %}>Waiting</option>
                             <option value="in_process" {% if task.status == 'in_process' %}selected{% endif %}>In Process</option>
                             <option value="completed" {% if task.status == 'completed' %}selected{% endif %}>Done</option>
                         </select>
 
-                        {% if not is_disabled %}
-                            <button type="submit" class="btn update-btn" style="width: 100%; font-size: 0.9em; padding: 6px;">Update</button>
-                        {% else %}
-                             <button type="button" class="btn" style="width: 100%; font-size: 0.9em; padding: 6px; background: #ccc; cursor: default;">Completed</button>
-                        {% endif %}
+                        <button type="submit" class="btn update-btn" style="width: 100%; font-size: 0.9em; padding: 6px;">Update</button>
                     </form>
                 </div>
                 {% endfor %}
