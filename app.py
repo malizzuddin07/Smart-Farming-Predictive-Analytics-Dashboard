@@ -666,9 +666,22 @@ def session_dashboard(session_id):
     # Get Tasks
     sort = request.args.get("sort_by", "default")
     sql = "SELECT * FROM farmer_task_steps WHERE session_id=%s"
+    
     if sort in ["soon", "in_process", "completed", "skipped"]:
         sql += f" AND status='{sort}'"
-    sql += " ORDER BY start_date ASC"
+    
+    # --- UPDATED SORTING LOGIC ---
+    # Put 'completed' and 'skipped' at the bottom
+    # Active tasks (soon/in_process) -> 0
+    # Done tasks (completed/skipped) -> 1
+    # Then sort by date
+    sql += """ ORDER BY 
+        CASE 
+            WHEN status IN ('completed', 'skipped') THEN 1 
+            ELSE 0 
+        END, 
+        start_date ASC"""
+        
     cur.execute(sql, (session_id,))
     tasks = cur.fetchall()
 
@@ -731,7 +744,7 @@ def session_dashboard(session_id):
         weather_forecast=weather_3day,
         historical_srad_json=json.dumps(srad_data),
         norm_params_json=json.dumps(normalization_params),
-        current_sort=sort # FIXED: Pass current sort to template so it doesn't reset
+        current_sort=sort # Pass current sort to template so it doesn't reset
     )
 
 
@@ -793,9 +806,13 @@ def update_step():
         cur.close()
         conn.close()
 
-    # 4. Redirect safely
+    # --- FIX: CAPTURE THE SORT PARAMETER ---
+    # We grab 'sort_by' from the URL so we can pass it back
+    current_sort = request.args.get('sort_by', 'default')
+
+    # 4. Redirect safely AND keep the sort order
     if session_id:
-        return redirect(url_for('session_dashboard', session_id=session_id))
+        return redirect(url_for('session_dashboard', session_id=session_id, sort_by=current_sort))
     else:
         return redirect(url_for('dashboard_home'))
 
