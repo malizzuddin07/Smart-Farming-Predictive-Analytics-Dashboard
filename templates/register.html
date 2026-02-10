@@ -1,3 +1,4 @@
+<<<<<<< HEAD
 {% extends "_base.html" %}
 
 {% block title %}Register - Smart Farming{% endblock %}
@@ -36,3 +37,66 @@
     </div>
 </div>
 {% endblock %}
+=======
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Register | Smart Farming</title>
+  <style>
+    body {
+      background-color: #f6f9f2;
+      font-family: 'Segoe UI', sans-serif;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      height: 100vh;
+    }
+    .card {
+      background: white;
+      padding: 30px;
+      border-radius: 10px;
+      box-shadow: 0 0 15px rgba(0,0,0,0.1);
+      width: 400px;
+    }
+    h2 { color: #9eb42c; text-align: center; }
+    input, button {
+      width: 100%; padding: 12px; margin-top: 10px;
+      border: 1px solid #ccc; border-radius: 6px;
+    }
+    button {
+      background-color: #c9dd60;
+      font-weight: bold;
+      cursor: pointer;
+    }
+    button:hover {
+      background-color: #a8c949;
+    }
+  </style>
+</head>
+<body>
+  <div class="card">
+    <h2>Register</h2>
+    <form method="POST" action="/register_user">
+      <input name="fullname" placeholder="Full Name" required>
+      <input name="ic" placeholder="IC Number" required>
+      <input name="state" placeholder="State" required>
+      <input name="phone" placeholder="Phone Number" required>
+      <input type="password" name="password" placeholder="Password" required>
+      <button type="submit">Register</button>
+    </form>
+  </div>
+  {% with messages = get_flashed_messages() %}
+  {% if messages %}
+    <script>
+      alert("{{ messages[0] }}");
+    </script>
+  {% endif %}
+{% endwith %}
+    {% if error %}
+        <script>
+        alert("{{ error }}");
+        </script>
+    {% endif %}
+</body>
+</html>
+>>>>>>> 20d02ed6152c8a0e77c5e3a017e93086bb18bf18

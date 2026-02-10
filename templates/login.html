@@ -1,3 +1,4 @@
+<<<<<<< HEAD
 {% extends "_base.html" %}
 
 {% block title %}Login - Smart Farming{% endblock %}
@@ -33,3 +34,67 @@
     </div>
 </div>
 {% endblock %}
+=======
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Login | Smart Farming</title>
+  <style>
+    body {
+      background-color: #f6f9f2;
+      font-family: 'Segoe UI', sans-serif;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      height: 100vh;
+    }
+    .card {
+      background: white;
+      padding: 30px;
+      border-radius: 10px;
+      box-shadow: 0 0 15px rgba(0,0,0,0.1);
+      width: 350px;
+    }
+    h2 { color: #9eb42c; text-align: center; }
+    input, button {
+      width: 100%; padding: 12px; margin-top: 10px;
+      border: 1px solid #ccc; border-radius: 6px;
+    }
+    button {
+      background-color: #c9dd60;
+      font-weight: bold;
+      cursor: pointer;
+    }
+    button:hover {
+      background-color: #a8c949;
+    }
+    p { text-align: center; }
+  </style>
+</head>
+<body>
+  <div class="card">
+    <h2>Login</h2>
+    <form method="POST" action="/login_user">
+      <input type="text" name="ic" placeholder="IC Number" required>
+      <input type="password" name="password" placeholder="Password" required>
+      <button type="submit">Login</button>
+    </form>
+    <p>Don't have an account? <a href="/register">Register</a></p>
+  </div>
+  {% with messages = get_flashed_messages() %}
+  {% if messages %}
+    <script>
+      alert("{{ messages[0] }}");
+    </script>
+  {% endif %}
+{% endwith %}
+  {% if error %}
+    <script>
+      alert("{{ error }}");
+    </script>
+  {% endif %}
+</body>
+</html>
+<!-- This is the login template where users can enter their IC number and password to log in. -->
+<!-- It also provides a link to the registration page for new users. -->
+>>>>>>> 20d02ed6152c8a0e77c5e3a017e93086bb18bf18

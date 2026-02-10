@@ -1,0 +1,219 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Dashboard | Smart Farming</title>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <style>
+    body {
+      font-family: 'Segoe UI', sans-serif;
+      background-color: #f6f9f2;
+      margin: 0;
+      padding: 0;
+    }
+
+    /* Navigation Bar */
+    .navbar {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      background-color: #876f25;
+      padding: 15px 30px;
+      color: white;
+      font-size: 18px;
+    }
+
+    .nav-left {
+      font-weight: bold;
+      font-size: 20px;
+    }
+
+    .nav-links a {
+      color: white;
+      text-decoration: none;
+      margin-left: 20px;
+      font-weight: normal;
+    }
+
+    .nav-links a:hover {
+      text-decoration: underline;
+    }
+
+    /* Main Container */
+    .container {
+      max-width: 1000px;
+      margin: 30px auto;
+      background: white;
+      padding: 30px;
+      border-radius: 12px;
+      box-shadow: 0 0 15px rgba(0,0,0,0.1);
+    }
+
+    h2, h3 {
+      color: #a8c949;
+    }
+
+    input, button {
+      width: 100%;
+      padding: 12px;
+      margin: 10px 0;
+      border-radius: 6px;
+      border: 1px solid #ccc;
+      font-size: 16px;
+    }
+
+    button {
+      background-color: #c9dd60;
+      font-weight: bold;
+      cursor: pointer;
+    }
+
+    button:hover {
+      background-color: #a8c949;
+    }
+
+    .prediction {
+      margin-top: 20px;
+      background: #f2f9dd;
+      padding: 15px;
+      border-left: 5px solid #9eb42c;
+    }
+
+    table {
+      width: 100%;
+      margin-top: 30px;
+      border-collapse: collapse;
+    }
+
+    th {
+      background-color: #9f892f;
+      color: white;
+      padding: 10px;
+    }
+
+    td {
+      padding: 10px;
+      border: 1px solid #ddd;
+      text-align: center;
+    }
+
+    .logout {
+      display: inline-block;
+      margin-top: 20px;
+      text-decoration: none;
+      color: white;
+      background-color: #876f25;
+      padding: 10px 20px;
+      border-radius: 6px;
+      font-weight: bold;
+    }
+
+    .logout:hover {
+      background-color: #9f892f;
+    }
+  </style>
+</head>
+<body>
+
+  <!-- Navigation Bar -->
+  <div class="navbar">
+    <div class="nav-left">🌾 Smart Farming</div>
+    <div class="nav-links">
+      <a href="/dashboard">🏠 Dashboard</a>
+      <a href="/workflow">🚜 To-Do List</a>
+      <a href="/logout">🚪 Logout</a>
+    </div>
+  </div>
+
+  <div class="container">
+    <h2>Welcome, {{ name }}</h2>
+
+    <!-- Prediction Form -->
+    <form method="POST" action="/predict">
+      <label>🌍 Location</label>
+      <input name="location" placeholder="Enter location" required>
+      <label>🌱 Field Size (ha)</label>
+      <input name="size" type="number" step="0.1" required>
+      <button type="submit">Predict Yield</button>
+    </form>
+
+    <!-- Prediction Result -->
+    {% if prediction %}
+    <div class="prediction">
+      <h3>📈 Prediction Result</h3>
+      <pre>{{ prediction }}</pre>
+    </div>
+    {% endif %}
+
+    <!-- Prediction History -->
+    <h3 id="history">📊 Yield Prediction History</h3>
+    <canvas id="yieldChart" height="100"></canvas>
+
+    <table>
+      <tr>
+        <th>Date</th>
+        <th>Location</th>
+        <th>Size (ha)</th>
+        <th>Yield/ha</th>
+        <th>Total Yield</th>
+      </tr>
+      {% for row in history %}
+      <tr>
+        <td>{{ row.predicted_at }}</td>
+        <td>{{ row.location }}</td>
+        <td>{{ row.field_size }}</td>
+        <td>{{ row.yield_per_hectare }}</td>
+        <td>{{ row.total_yield }}</td>
+      </tr>
+      {% endfor %}
+    </table>
+
+    <!-- Optional Manual Logout Button -->
+    <a class="logout" href="/logout">Logout</a>
+  </div>
+
+  <!-- Flash messages -->
+  {% with messages = get_flashed_messages() %}
+    {% if messages %}
+      <script>
+        alert("{{ messages[0] }}");
+      </script>
+    {% endif %}
+  {% endwith %}
+  {% if error %}
+    <script>
+      alert("{{ error }}");
+    </script>
+  {% endif %}
+
+  <!-- Chart.js Script -->
+  <script>
+    const chartLabels = {{ history | map(attribute='predicted_at') | list | tojson }};
+    const chartYields = {{ history | map(attribute='total_yield') | list | tojson }};
+
+    const ctx = document.getElementById('yieldChart').getContext('2d');
+    new Chart(ctx, {
+      type: 'line',
+      data: {
+        labels: chartLabels,
+        datasets: [{
+          label: 'Total Yield (tons)',
+          data: chartYields,
+          borderColor: '#a8c949',
+          backgroundColor: 'rgba(168, 201, 73, 0.1)',
+          tension: 0.3,
+          fill: true,
+          pointBackgroundColor: '#9f892f'
+        }]
+      },
+      options: {
+        responsive: true,
+        scales: {
+          x: { title: { display: true, text: 'Prediction Date' }},
+          y: { title: { display: true, text: 'Yield (tons)' }}
+        }
+      }
+    });
+  </script>
+
+</body>
+</html>

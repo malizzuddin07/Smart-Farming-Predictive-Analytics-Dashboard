@@ -38,7 +38,11 @@ deactivate () {
 # unset irrelevant variables
 deactivate nondestructive
 
+<<<<<<< HEAD
 VIRTUAL_ENV="C:\Users\akmal\Desktop\SmartFarming_Model\venv"
+=======
+VIRTUAL_ENV="C:\Users\akmal\Desktop\FYP\model\test\venv"
+>>>>>>> 20d02ed6152c8a0e77c5e3a017e93086bb18bf18
 export VIRTUAL_ENV
 
 _OLD_VIRTUAL_PATH="$PATH"

@@ -8,7 +8,11 @@ if defined _OLD_CODEPAGE (
     "%SystemRoot%\System32\chcp.com" 65001 > nul
 )
 
+<<<<<<< HEAD
 set VIRTUAL_ENV=C:\Users\akmal\Desktop\SmartFarming_Model\venv
+=======
+set VIRTUAL_ENV=C:\Users\akmal\Desktop\FYP\model\test\venv
+>>>>>>> 20d02ed6152c8a0e77c5e3a017e93086bb18bf18
 
 if not defined PROMPT set PROMPT=$P$G
 
